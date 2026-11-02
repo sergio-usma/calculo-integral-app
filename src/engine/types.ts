@@ -52,6 +52,14 @@ export interface AreaInfo {
   vline?: number
 }
 
+/** Metadatos simbólicos para generar el código Python (SymPy). Las cadenas se leen con sympify. */
+export type PyMeta =
+  | { kind: 'subst'; u: string; g: string }
+  | { kind: 'parts'; us: string[] }
+  | { kind: 'trig'; x: string; integrand: string; back: string }
+  | { kind: 'pf'; roots: number[]; coefs: number[]; q: number; dens?: string[] }
+  | { kind: 'area'; regions: [string, string][]; domain?: [string, string] }
+
 export interface Problem {
   id: string
   family: number
@@ -75,6 +83,7 @@ export interface Problem {
   bounds?: [number, number]
   area?: AreaInfo
   usesTrig?: boolean
+  py?: PyMeta
 }
 
 export const FAMILY_TITLE: Record<number, string> = {

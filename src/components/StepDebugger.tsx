@@ -9,7 +9,7 @@ interface Flat {
   first: boolean
 }
 
-export function StepDebugger({ steps, onSelectLine, startAt = 0 }: { steps: Step[]; onSelectLine?: (n: number, flat: Flat[]) => void; startAt?: number }) {
+export function StepDebugger({ steps, onSelectLine, onAsk, startAt = 0 }: { steps: Step[]; onSelectLine?: (n: number, flat: Flat[]) => void; onAsk?: (n: number) => void; startAt?: number }) {
   const flat = useMemo<Flat[]>(() => {
     const out: Flat[] = []
     steps.forEach((s, si) => s.lines.forEach((tex, li) => out.push({ n: out.length + 1, step: si, tex, first: li === 0 })))
@@ -162,7 +162,8 @@ export function StepDebugger({ steps, onSelectLine, startAt = 0 }: { steps: Step
             <div className="panel">
               <h4>Línea seleccionada: L{sel}</h4>
               <Tex block>{flat[sel - 1].tex}</Tex>
-              <p className="muted">En la Etapa 2, aquí podrás pedirle al agente de IA que te explique esta línea.</p>
+              {onAsk && <button className="btn btn-primary" onClick={() => onAsk(sel)}>🤖 Pregúntale al agente sobre L{sel}</button>}
+              <p className="muted">También puedes escribir @L{sel} en el chat del agente.</p>
             </div>
           )}
         </aside>

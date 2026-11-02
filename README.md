@@ -4,13 +4,18 @@ App web (React + TypeScript + Vite, 100 % estática) para preparar el examen de 
 taller resuelto línea por línea, variantes ilimitadas, gráficas interactivas y guía de la Casio fx-570ES PLUS.
 Todas las fórmulas se muestran en LaTeX (KaTeX).
 
-## Estado
+## Qué incluye
 
-**Etapa 1 (lista):** taller resuelto (9 ejercicios), visor de pasos tipo depurador (líneas, breakpoints, variables),
-gráficas interactivas (área, rectángulo `dx`, suma de rectángulos, integral definida), práctica con 4 variantes por
-ejercicio (2 gemelas + 2 retos con trigonometría y π) y guía de la calculadora.
+- **Taller resuelto** (9 ejercicios) con visor de pasos tipo depurador (líneas L1…, breakpoints, variables).
+- **Gráficas interactivas** (área, rectángulo `dx`, suma de rectángulos, integral definida).
+- **Práctica**: 4 variantes por ejercicio (2 gemelas + 2 retos con trigonometría y π).
+- **🐍 Versión en Python por ejercicio**: script SymPy bloque a bloque, ejecutable en el navegador (Pyodide, opcional), copiable y descargable. Todos los scripts se verifican con Python real (`scripts/verify-python.py`).
+- **Agente de IA (opcional)**: pega tu API key (OpenAI / opencode Go / compatible) y el ID del modelo; cita líneas con clic o `@L5` / `@P12`. Respuestas en LaTeX. La clave solo vive en tu navegador.
+- **Quiz guiado** con autocompletado, pistas graduadas, temporizador de 15 min y pista del agente.
+- **Modo examen** con temporizador, gráfica con clics (marcar cortes) y corrección con rúbrica.
+- **Casio fx-570ES PLUS**: teclas para verificar cada ejercicio.
 
-**Pendiente:** agente de IA (OpenAI / opencode Go), quiz guiado, modo examen, cheatsheet explicado, álgebra desde cero, PWA offline.
+**Pendiente:** cheatsheet explicado, álgebra desde cero, modo offline (PWA).
 
 ## Desarrollo
 
@@ -19,6 +24,10 @@ npm install
 npm run dev      # servidor local
 npm test         # verifica con cálculo numérico que TODAS las variantes son matemáticamente correctas
 npm run build    # genera dist/
+
+# Verificar los scripts de Python generados con Python real (requiere: pip install sympy)
+PY_OUT=py-scripts.json npx vitest run scripts/export-python.test.ts
+python scripts/verify-python.py py-scripts.json
 ```
 
 ## Publicar en GitHub Pages

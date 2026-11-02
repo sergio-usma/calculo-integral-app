@@ -55,6 +55,7 @@ function a7Lines(m: number, n: number, c: number, t: number): Draft {
     answer: `${fl(fr((b1 - c) * t, 2))}\\ \\text{unidades}^{2}`,
     verification: [`\\text{Triángulo: base}=${b1 - c}\\ (\\text{sobre el eje }y),\\ \\text{altura}=${t}\\ \\Rightarrow\\ A=\\frac{1}{2}\\cdot ${b1 - c}\\cdot ${t}=${fl(fr((b1 - c) * t, 2))}`],
     hints: ['Iguala f y g para hallar el corte.', '¿Qué función vale más en un punto de prueba?', 'A = ∫ (arriba − abajo) dx de 0 al corte.'],
+    py: { kind: 'area', regions: [['0', `${t}`]] },
     area: {
       curves: [
         { label: 'f', tex: `f(x)=${ftex}`, expr: lineExpr(-m, b1), color: BLUE },
@@ -89,6 +90,7 @@ function a7PiLines(): Draft {
     answer: '\\frac{\\pi^{2}}{4}\\approx 2.467\\ \\text{unidades}^{2}',
     verification: ['\\text{Triángulo: base}=\\pi,\\ \\text{altura}=\\frac{\\pi}{2}\\Rightarrow A=\\frac{1}{2}\\cdot\\pi\\cdot\\frac{\\pi}{2}=\\frac{\\pi^{2}}{4}'],
     hints: ['π es un número.', 'Corte: π − x = x.', 'La integral de π es πx.'],
+    py: { kind: 'area', regions: [['0', 'pi/2']] },
     area: {
       curves: [
         { label: 'f', tex: 'f(x)=\\pi-x', expr: 'pi-x', color: BLUE },
@@ -125,6 +127,7 @@ function a7Parab(m: number): Draft {
     answer: `${fl(mm)}\\ \\text{unidades}^{2}`,
     verification: ['\\text{Con la Casio: }\\int_{-' + m + '}^{' + m + '}(' + c + '-2X^{2})dx'],
     hints: ['Iguala las dos funciones.', 'x² = número → dos soluciones.', 'Función par → duplica la mitad.'],
+    py: { kind: 'area', regions: [[`-${m}`, `${m}`]] },
     area: {
       curves: [
         { label: 'f', tex: `f(x)=${c}-x^{2}`, expr: `${c}-x^2`, color: BLUE },
@@ -165,6 +168,7 @@ function a8Cubic(j: number, c: number): Draft {
     answer: `${fl(fr(j ** 4, 2))}\\ \\text{unidades}^{2}`,
     verification: [`\\text{Atajo: }A=2A_{1}=2\\cdot${fl(fr(j ** 4, 4))}=${fl(fr(j ** 4, 2))}`],
     hints: ['Iguala y factoriza: ¿cuántos cortes?', 'Con cruce se parte la integral.', 'Prueba un punto en cada tramo.'],
+    py: { kind: 'area', regions: [[`-${j}`, '0'], ['0', `${j}`]] },
     area: {
       curves: [
         { label: 'f', tex: `f(x)=${ftex}`, expr: `x^3+(${c})`, color: BLUE },
@@ -208,6 +212,7 @@ function a8ParabLine(r: number, s: number): Draft {
     answer: `${fl(fr(Math.round(area * 6), 6))}\\ \\text{unidades}^{2}`,
     verification: [`\\text{Fórmula rápida: }A=\\frac{(s-r)^{3}}{6}=\\frac{${s - r}^{3}}{6}=${fl(fr(Math.round(area * 6), 6))}`],
     hints: ['Iguala y factoriza.', 'La recta queda sobre la parábola entre los cortes.', 'A = ∫ (recta − parábola).'],
+    py: { kind: 'area', regions: [[`${r}`, `${s}`]] },
     area: {
       curves: [
         { label: 'f', tex: 'f(x)=x^{2}', expr: 'x^2', color: BLUE },
@@ -240,6 +245,7 @@ function a8Pi(): Draft {
     answer: '\\frac{\\pi^{3}}{6}\\approx 5.168\\ \\text{unidades}^{2}',
     verification: ['\\text{Fórmula rápida: }A=\\frac{(s-r)^{3}}{6}=\\frac{\\pi^{3}}{6}'],
     hints: ['Saca x de factor común.', 'π es un número.', 'Mismo patrón que (s−r)³/6.'],
+    py: { kind: 'area', regions: [['0', 'pi']] },
     area: {
       curves: [
         { label: 'f', tex: 'f(x)=x^{2}', expr: 'x^2', color: BLUE },
@@ -274,6 +280,7 @@ function a8Exp(): Draft {
     answer: 'e+\\frac{1}{e}-2\\approx 1.086\\ \\text{unidades}^{2}',
     verification: ['\\text{Casio: }\\int_{0}^{1}(e^{X}-e^{-X})dX\\approx 1.0862'],
     hints: ['e^a = e^b → a = b.', 'Antiderivada de e^{-x} es −e^{-x}.', 'e⁰ = 1.'],
+    py: { kind: 'area', regions: [['0', '1']] },
     area: {
       curves: [
         { label: 'f', tex: 'f(x)=e^{x}', expr: 'exp(x)', color: BLUE },
@@ -315,6 +322,7 @@ function a9Sin(a: number): Draft {
     verification: [`\\text{Casio (Rad): }\\int_{0}^{\\pi}(${a}\\sin X-\\sin(X-\\pi))dX=${A}`],
     hints: ['Simplifica sin(x−π) = −sin x.', 'sin x = 0 en 0 y π.', 'cos π = −1 y cos 0 = 1.'],
     usesTrig: true,
+    py: { kind: 'area', regions: [['0', 'pi']], domain: ['0', '2*pi'] },
     area: {
       curves: [
         { label: 'f', tex: `f(x)=${ac}\\sin x`, expr: `${a}*sin(x)`, color: BLUE },
@@ -346,6 +354,7 @@ function a9SinCos(): Draft {
     verification: ['\\text{Casio (Rad): }\\int_{\\pi/4}^{5\\pi/4}(\\sin X-\\cos X)dX=2.8284'],
     hints: ['sin = cos → tan = 1.', 'En el medio, sin vale más.', 'Usa los valores del círculo unitario.'],
     usesTrig: true,
+    py: { kind: 'area', regions: [['pi/4', '5*pi/4']], domain: ['0', '2*pi'] },
     area: {
       curves: [
         { label: 'f', tex: 'f(x)=\\sin x', expr: 'sin(x)', color: BLUE },
@@ -377,6 +386,7 @@ function a9Double(): Draft {
     verification: ['\\text{Casio (Rad): }\\int_{0}^{\\pi}|\\sin X-\\sin 2X|dX=2.5'],
     hints: ['sin 2x = 2 sin x cos x.', 'Factoriza, no canceles.', 'Hay cruce: dos integrales.'],
     usesTrig: true,
+    py: { kind: 'area', regions: [['0', 'pi/3'], ['pi/3', 'pi']], domain: ['0', 'pi'] },
     area: {
       curves: [
         { label: 'f', tex: 'f(x)=\\sin x', expr: 'sin(x)', color: BLUE },
@@ -410,6 +420,7 @@ function a9Shift(): Draft {
     verification: ['\\text{Casio (Rad): }\\int_{2\\pi/3}^{5\\pi/3}(\\sin(X-\\pi/3)-\\sin X)dX=2'],
     hints: ['sin A = sin B ⇒ A = π − B.', 'Evalúa en el punto medio.', 'Valores del círculo unitario.'],
     usesTrig: true,
+    py: { kind: 'area', regions: [['2*pi/3', '5*pi/3']], domain: ['0', '2*pi'] },
     area: {
       curves: [
         { label: 'f', tex: 'f(x)=\\sin x', expr: 'sin(x)', color: BLUE },

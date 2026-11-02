@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { KeyChips } from '../components/KeyChips'
 import { ProblemView } from '../components/ProblemView'
 import { Md, Tex } from '../components/Tex'
@@ -38,8 +38,26 @@ export function Home() {
           <li><b>Repite con una variante gemela</b> hasta que salga sin mirar. Ahí está la nota.</li>
         </ol>
       </div>
+      <div className="grid-3">
+        <Link className="card big" to="/quiz/1/G1">
+          <h3>④ Quiz guiado</h3>
+          <p>Un paso a la vez, con autocompletado y pistas graduadas. Pensado para mantener el foco.</p>
+        </Link>
+        <Link className="card big" to="/examen">
+          <h3>⑤ Modo examen</h3>
+          <p>6 integrales + 3 áreas con temporizador. En las áreas debes graficar y marcar los cortes.</p>
+        </Link>
+        <Link className="card big" to="/config">
+          <h3>⚙ Agente de IA</h3>
+          <p>Pega tu API key (OpenAI u opencode Go) y pide explicaciones de cualquier línea del procedimiento o del código Python.</p>
+        </Link>
+      </div>
+      <div className="panel">
+        <h3>🐍 Para quien programa</h3>
+        <p>Cada ejercicio trae su <b>versión en Python (SymPy)</b>, bloque por bloque, que puedes ejecutar en el navegador, copiar o descargar. Abre cualquier ejercicio y busca la pestaña <b>“Python paso a paso”</b>.</p>
+      </div>
       <div className="panel note warn">
-        <b>Estado:</b> Etapa 1 — taller, práctica y Casio. Próximamente: agente de IA, quiz guiado, modo examen, cheatsheet explicado y álgebra desde cero.
+        <b>Estado:</b> quedan pendientes el cheatsheet explicado, el álgebra desde cero y el modo offline (PWA).
       </div>
     </div>
   )
@@ -96,7 +114,8 @@ export function Practica() {
   const nav = useNavigate()
   const f = Number(fam ?? 1)
   const lv = (level ?? 'G1') as Level
-  const [seed, setSeed] = useState(1)
+  const [sp] = useSearchParams()
+  const [seed, setSeed] = useState(Number(sp.get('seed')) || 1)
   const p = useMemo(() => generate(f, lv, seed), [f, lv, seed])
   return (
     <div className="page">

@@ -14,6 +14,8 @@ export interface GraphProps {
   rects?: Rect[]
   highlightRect?: Rect | null
   height?: number
+  onPick?: (x: number, y: number) => void
+  marks?: { x: number; y: number }[]
 }
 
 const W = 760
@@ -42,11 +44,11 @@ const fmtTick = (v: number) => {
   return Object.is(r, -0) ? '0' : String(r)
 }
 
-export function Graph({ curves, regions = [], points = [], view, vline, rects = [], highlightRect, height = 440 }: GraphProps) {
+export function Graph({ curves, regions = [], points = [], view, vline, rects = [], highlightRect, height = 440, onPick, marks = [] }: GraphProps) {
   const [v, setV] = useState<View>(view)
   const viewKey = view.join(',')
   useEffect(() => setV(view), [viewKey]) // eslint-disable-line react-hooks/exhaustive-deps
-  const drag = useRef<{ x: number; y: number; v: View } | null>(null)
+  const drag = useRef<{ x: number; y: number; v: View; moved: boolean } | null>(null)
   const [x0, x1, y0, y1] = v
   const H = height
   const sx = (x: number) => ((x - x0) / (x1 - x0)) * W
@@ -106,20 +108,31 @@ export function Graph({ curves, regions = [], points = [], view, vline, rects = 
   }
   const onDown = (e: React.PointerEvent<SVGSVGElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId)
-    drag.current = { x: e.clientX, y: e.clientY, v }
+    drag.current = { x: e.clientX, y: e.clientY, v, moved: false }
   }
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const d = drag.current
     if (!d) return
+    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 4) d.moved = true
+    if (onPick && !d.moved) return
     const rect = e.currentTarget.getBoundingClientRect()
     const dx = ((e.clientX - d.x) / rect.width) * (d.v[1] - d.v[0])
     const dy = ((e.clientY - d.y) / rect.height) * (d.v[3] - d.v[2])
     setV([d.v[0] - dx, d.v[1] - dx, d.v[2] + dy, d.v[3] + dy])
   }
 
+  const onUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = drag.current
+    drag.current = null
+    if (d && !d.moved && onPick) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      onPick(x0 + ((e.clientX - rect.left) / rect.width) * (x1 - x0), y1 - ((e.clientY - rect.top) / rect.height) * (y1 - y0))
+    }
+  }
+
   return (
     <div className="graph">
-      <svg viewBox={`0 0 ${W} ${H}`} onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => (drag.current = null)} role="img" aria-label="Gráfica interactiva">
+      <svg viewBox={`0 0 ${W} ${H}`} onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} role="img" aria-label="Gráfica interactiva">
         <rect width={W} height={H} className="g-bg" />
         {xt.map((t) => (
           <g key={`x${t}`}>
@@ -151,6 +164,14 @@ export function Graph({ curves, regions = [], points = [], view, vline, rects = 
         {vline !== undefined && <line x1={sx(vline)} x2={sx(vline)} y1={0} y2={H} className="g-vline" />}
         {fns.map((f, i) => (
           <path key={i} d={path(f)} fill="none" stroke={curves[i].color} strokeWidth={2.4} strokeDasharray={curves[i].dashed ? '6 5' : undefined} />
+        ))}
+        {marks.map((m, i) => (
+          <g key={`m${i}`}>
+            <circle cx={sx(m.x)} cy={sy(m.y)} r={7} className="g-mark" />
+            <text x={sx(m.x) + 10} y={sy(m.y) + 4} className="g-label">
+              {i + 1}
+            </text>
+          </g>
         ))}
         {points.map((p, i) => (
           <g key={i}>

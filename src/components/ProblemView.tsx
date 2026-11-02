@@ -1,24 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useAgent } from '../agent/AgentContext'
+import { pythonFor } from '../engine/python'
 import { LEVEL_LABEL } from '../engine/types'
 import type { Problem } from '../engine/types'
 import { KeyChips } from './KeyChips'
+import { PythonView } from './PythonView'
 import { StepDebugger } from './StepDebugger'
 import { Md, Tex } from './Tex'
 import { AreaViz, IntegralViz } from './Viz'
 
-type Tab = 'result' | 'steps' | 'graph' | 'casio'
+type Tab = 'result' | 'steps' | 'graph' | 'casio' | 'py'
 
 export function ProblemView({ p, label }: { p: Problem; label?: string }) {
   const [sp] = useSearchParams()
   const [tab, setTab] = useState<Tab>((sp.get('tab') as Tab) || 'steps')
   const [hint, setHint] = useState(0)
   const [showAns, setShowAns] = useState(false)
+  const agent = useAgent()
+  const mathLines = useMemo(() => p.steps.flatMap((s) => s.lines), [p])
+  const { setProblem, selectRef } = agent
+  useEffect(() => {
+    setProblem({ id: p.id, title: p.title, statement: p.statement, method: p.method, mathLines, pyLines: pythonFor(p).full.split('\n') })
+    selectRef(null)
+    return () => setProblem(null)
+  }, [p, mathLines, setProblem, selectRef])
   const tabs: [Tab, string][] = [
     ['steps', '① Paso a paso'],
     ['graph', '② Gráfica'],
     ['casio', '③ Comprueba con tu Casio'],
-    ['result', '④ Resultado y pistas'],
+    ['py', '④ 🐍 Python paso a paso'],
+    ['result', '⑤ Resultado y pistas'],
   ]
   return (
     <section className="notebook">
@@ -43,7 +55,7 @@ export function ProblemView({ p, label }: { p: Problem; label?: string }) {
           </button>
         ))}
       </nav>
-      {tab === 'steps' && <StepDebugger steps={p.steps} startAt={Number(sp.get('line') ?? 0)} />}
+      {tab === 'steps' && <StepDebugger steps={p.steps} startAt={Number(sp.get('line') ?? 0)} onSelectLine={(n, flat) => agent.selectRef({ kind: 'L', n, text: flat[n - 1].tex })} onAsk={(n) => void agent.send(`Explícame con detalle la línea @L${n}: qué hace, por qué es válida y qué álgebra hay escondida.`)} />}
       {tab === 'graph' && (p.kind === 'area' ? <AreaViz p={p} /> : <IntegralViz p={p} />)}
       {tab === 'casio' && (
         <div className="casio-list">
@@ -66,6 +78,7 @@ export function ProblemView({ p, label }: { p: Problem; label?: string }) {
           ))}
         </div>
       )}
+      {tab === 'py' && <PythonView p={p} />}
       {tab === 'result' && (
         <div>
           <div className="panel">
