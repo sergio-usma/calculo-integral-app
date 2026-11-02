@@ -83,7 +83,9 @@ function QuizRun({ p, qs }: { p: ReturnType<typeof generate>; qs: Question[] }) 
     const t = setInterval(() => setTime((s) => Math.max(0, s - 1)), 1000)
     return () => clearInterval(t)
   }, [running])
-  useEffect(() => input.current?.focus(), [i])
+  useEffect(() => {
+    input.current?.focus()
+  }, [i])
 
   const ghost = q && q.kind !== 'choice' ? ghostOf(text, hints >= 3 ? q.expected : hints >= 1 && q.expected.length < 18 ? q.expected : '') : ''
   const prev = texPreview(text)

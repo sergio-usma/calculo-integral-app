@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAgent } from '../agent/AgentContext'
+import { ErrorBoundary } from './ErrorBoundary'
 import { Md, Tex } from './Tex'
 
 const QUICK: [string, string][] = [
@@ -16,7 +17,9 @@ export function AgentPanel() {
   const a = useAgent()
   const [text, setText] = useState('')
   const end = useRef<HTMLDivElement>(null)
-  useEffect(() => end.current?.scrollIntoView({ behavior: 'smooth' }), [a.messages])
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+  }, [a.messages])
   if (!a.open) return null
   const submit = () => {
     const t = text.trim()
@@ -68,8 +71,8 @@ export function AgentPanel() {
       </div>
       <div className="agent-msgs">
         {a.messages.length === 0 && <p className="muted">Pregunta lo que quieras: el agente responde con fórmulas en LaTeX y paso a paso.</p>}
-        {a.messages.map((m, i) => (
-          <div key={i} className={`msg ${m.role}`}>
+        {a.messages.map((m) => (
+          <div key={m.id} className={`msg ${m.role}`}>
             {m.role === 'user' ? (
               <>
                 {m.refs?.map((r) => (
@@ -81,7 +84,9 @@ export function AgentPanel() {
                 <span>{m.content}</span>
               </>
             ) : m.content ? (
-              <Md>{m.content}</Md>
+              <ErrorBoundary resetKey={m.content.length} fallback={() => <pre className="md-raw">{m.content}</pre>}>
+                <Md>{m.content}</Md>
+              </ErrorBoundary>
             ) : (
               <span className="muted">pensando…</span>
             )}

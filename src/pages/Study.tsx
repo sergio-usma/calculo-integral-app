@@ -31,7 +31,9 @@ const TECHNIQUES = [
 export function Study() {
   const [done, setDone] = useState<number[]>(() => JSON.parse(localStorage.getItem('ci.plan') ?? '[]'))
   const [streak, setStreak] = useState(0)
-  useEffect(() => setStreak(touchStreak().streak), [])
+  useEffect(() => {
+    setStreak(touchStreak().streak)
+  }, [])
   const toggle = (i: number) => {
     const n = done.includes(i) ? done.filter((x) => x !== i) : [...done, i]
     setDone(n)

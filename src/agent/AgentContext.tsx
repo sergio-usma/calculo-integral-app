@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { streamChat } from './client'
 import type { ChatMessage } from './client'
@@ -23,6 +23,7 @@ export interface Ref {
 }
 
 export interface Msg {
+  id: number
   role: 'user' | 'assistant' | 'error'
   content: string
   refs?: Ref[]
@@ -80,33 +81,69 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     saveSettings(s)
   }, [])
 
+  // Refs: la función send() no depende de `messages`/`busy`, así que no se recrea en cada token
+  // y nunca lee estado viejo (stale closure).
+  const busyRef = useRef(false)
+  const messagesRef = useRef<Msg[]>([])
+  const problemRef = useRef<ProblemCtx | null>(null)
+  const refRef = useRef<Ref | null>(null)
+  const settingsRef = useRef(settings)
+  const nextId = useRef(1)
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+      abort.current?.abort()
+    }
+  }, [])
+  useEffect(() => {
+    messagesRef.current = messages
+    problemRef.current = problem
+    refRef.current = ref
+    settingsRef.current = settings
+  })
+
+  /** Actualiza un mensaje por id (no por posición: seguro aunque se pulse «Limpiar» a mitad). */
+  const patch = useCallback((id: number, fn: (m: Msg) => Msg) => {
+    if (!mounted.current) return
+    setMessages((all) => all.map((m) => (m.id === id ? fn(m) : m)))
+  }, [])
+
   const send = useCallback(
     async (text: string, extraContext?: string) => {
-      if (!text.trim() || busy) return
+      if (!text.trim() || busyRef.current) return
+      const problem = problemRef.current
+      const settings = settingsRef.current
       // Resolver @L5 / @P12 escritos en el mensaje
       const refs: Ref[] = []
-      if (ref) refs.push(ref)
-      for (const m of text.matchAll(/@([LP])(\d+)/g)) {
+      if (refRef.current) refs.push(refRef.current)
+      for (const m of text.matchAll(/@([LP])(\d+)/gi)) {
+        const kind = m[1].toUpperCase() as 'L' | 'P'
         const n = Number(m[2])
-        const arr = m[1] === 'L' ? problem?.mathLines : problem?.pyLines
+        const arr = kind === 'L' ? problem?.mathLines : problem?.pyLines
         const t = arr?.[n - 1]
-        if (t && !refs.some((r) => r.kind === m[1] && r.n === n)) refs.push({ kind: m[1] as 'L' | 'P', n, text: t })
+        if (t && !refs.some((r) => r.kind === kind && r.n === n)) refs.push({ kind, n, text: t })
       }
-      const userMsg: Msg = { role: 'user', content: text, refs }
-      const history = messages.filter((m) => m.role !== 'error')
-      setMessages([...history, userMsg, { role: 'assistant', content: '' }])
+      const history = messagesRef.current.filter((m) => m.role !== 'error' && m.content)
+      const userMsg: Msg = { id: nextId.current++, role: 'user', content: text, refs }
+      const botId = nextId.current++
+      setMessages([...messagesRef.current.filter((m) => m.role !== 'error'), userMsg, { id: botId, role: 'assistant', content: '' }])
       setOpen(true)
       if (!isConfigured(settings)) {
-        setMessages((m) => [...m.slice(0, -1), { role: 'error', content: 'Aún no has configurado el agente. Ve a **Configuración** y pega tu API key y el ID del modelo.' }])
+        patch(botId, () => ({ id: botId, role: 'error', content: 'Aún no has configurado el agente. Ve a **Configuración** y pega tu API key y el ID del modelo.' }))
         return
       }
       const payload: ChatMessage[] = [
-        { role: 'system', content: `${SYSTEM}\n\n${buildContext(problem, refs, extraContext)}` },
+        { role: 'system', content: `${SYSTEM}
+
+${buildContext(problem, refs, extraContext)}` },
         ...history.slice(-10).map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
         { role: 'user', content: text },
       ]
       const ac = new AbortController()
       abort.current = ac
+      busyRef.current = true
       setBusy(true)
       let acc = ''
       try {
@@ -116,19 +153,31 @@ export function AgentProvider({ children }: { children: ReactNode }) {
           signal: ac.signal,
           onDelta: (d) => {
             acc += d
-            setMessages((m) => [...m.slice(0, -1), { role: 'assistant', content: acc }])
+            patch(botId, (m) => ({ ...m, content: acc }))
           },
         })
-        if (!acc) setMessages((m) => [...m.slice(0, -1), { role: 'error', content: 'El modelo no devolvió texto. Revisa el ID del modelo.' }])
+        if (!acc && !ac.signal.aborted) patch(botId, () => ({ id: botId, role: 'error', content: 'El modelo no devolvió texto. Revisa el ID del modelo.' }))
+        else if (!acc) patch(botId, () => ({ id: botId, role: 'error', content: 'Respuesta detenida.' }))
       } catch (e) {
-        setMessages((m) => [...m.slice(0, -1), ...(acc ? [{ role: 'assistant' as const, content: acc }] : []), { role: 'error', content: (e as Error).message }])
+        const msg = (e as Error)?.message || 'Error desconocido al llamar al agente.'
+        if (acc) {
+          const errId = nextId.current++
+          if (mounted.current) setMessages((all) => [...all, { id: errId, role: 'error', content: msg }])
+        } else patch(botId, () => ({ id: botId, role: 'error', content: msg }))
       } finally {
-        setBusy(false)
+        busyRef.current = false
         abort.current = null
+        if (mounted.current) setBusy(false)
       }
     },
-    [busy, messages, problem, ref, settings],
+    [patch],
   )
+
+  const stop = useCallback(() => abort.current?.abort(), [])
+  const clear = useCallback(() => {
+    abort.current?.abort()
+    setMessages([])
+  }, [])
 
   const value = useMemo<Ctx>(
     () => ({
@@ -144,10 +193,10 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       ref,
       selectRef: setRef,
       send,
-      stop: () => abort.current?.abort(),
-      clear: () => setMessages([]),
+      stop,
+      clear,
     }),
-    [settings, setSettings, open, messages, busy, problem, ref, send],
+    [settings, setSettings, open, messages, busy, problem, ref, send, stop, clear],
   )
   return <C.Provider value={value}>{children}</C.Provider>
 }

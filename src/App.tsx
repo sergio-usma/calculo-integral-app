@@ -1,6 +1,8 @@
-import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { AgentProvider, useAgent } from './agent/AgentContext'
 import { AgentPanel } from './components/AgentPanel'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { AlgebraHome, AlgebraLesson } from './pages/Algebra'
 import { Cheatsheet } from './pages/Cheat'
 import { Config } from './pages/Config'
@@ -16,6 +18,12 @@ function AgentButton() {
       🤖 Agente {a.configured ? '' : '(sin configurar)'}
     </button>
   )
+}
+
+/** Aísla fallos: un error en una página o en el panel del agente no tumba el resto; se limpia al navegar. */
+function Guard({ children }: { children: ReactNode }) {
+  const loc = useLocation()
+  return <ErrorBoundary resetKey={loc.pathname}>{children}</ErrorBoundary>
 }
 
 export default function App() {
@@ -43,6 +51,7 @@ export default function App() {
             <NavLink to="/estudio">⑧ Estudio y progreso</NavLink>
           </nav>
           <main>
+            <Guard>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/taller" element={<Taller />} />
@@ -59,8 +68,11 @@ export default function App() {
               <Route path="/algebra/:id" element={<AlgebraLesson />} />
               <Route path="/estudio" element={<Study />} />
             </Routes>
+            </Guard>
           </main>
-          <AgentPanel />
+          <Guard>
+            <AgentPanel />
+          </Guard>
         </div>
       </div>
     </HashRouter>

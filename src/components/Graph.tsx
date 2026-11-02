@@ -47,7 +47,9 @@ const fmtTick = (v: number) => {
 export function Graph({ curves, regions = [], points = [], view, vline, rects = [], highlightRect, height = 440, onPick, marks = [] }: GraphProps) {
   const [v, setV] = useState<View>(view)
   const viewKey = view.join(',')
-  useEffect(() => setV(view), [viewKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setV(view)
+  }, [viewKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const drag = useRef<{ x: number; y: number; v: View; moved: boolean } | null>(null)
   const [x0, x1, y0, y1] = v
   const H = height
