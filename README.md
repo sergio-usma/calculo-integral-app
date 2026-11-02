@@ -15,7 +15,10 @@ Todas las fórmulas se muestran en LaTeX (KaTeX).
 - **Modo examen** con temporizador, gráfica con clics (marcar cortes) y corrección con rúbrica.
 - **Casio fx-570ES PLUS**: teclas para verificar cada ejercicio.
 
-**Pendiente:** cheatsheet explicado, álgebra desde cero, modo offline (PWA).
+- **Cheatsheet explicado** (36 fórmulas con porqué, ejemplo y mnemotecnia; las verificables están comprobadas numéricamente) y **tarjetas de repaso espaciado**.
+- **Álgebra desde cero**: 7 lecciones con ejemplo paso a paso, práctica con ejercicios generados y diagnóstico.
+- **Estudio y progreso**: plan para antes del examen, técnicas para atención/memoria y racha.
+- **Modo offline**: service worker propio (la app queda guardada tras la primera visita).
 
 ## Desarrollo
 
@@ -28,6 +31,11 @@ npm run build    # genera dist/
 # Verificar los scripts de Python generados con Python real (requiere: pip install sympy)
 PY_OUT=py-scripts.json npx vitest run scripts/export-python.test.ts
 python scripts/verify-python.py py-scripts.json
+
+# Pruebas de interfaz reales en Edge (requiere: npx vite preview --port 4173)
+node scripts/e2e-ui.mjs <carpeta>      # examen con clics, quiz, panel del agente
+node scripts/e2e-stage3.mjs <carpeta>  # cheatsheet, tarjetas, álgebra y modo OFFLINE
+node scripts/e2e-pyodide.mjs           # ejecuta el script de Python dentro del navegador
 ```
 
 ## Publicar en GitHub Pages

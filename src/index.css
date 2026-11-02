@@ -232,3 +232,27 @@ pre.py-code { background: #0f1720; color: #e6edf3; border-radius: 10px; padding:
 
 .ac-wrap:has(.ghost) .ac-input::placeholder { color: transparent; }
 .field > span code { display: inline; }
+
+/* etapa 3 */
+.cs-section { margin: 22px 0; }
+.cs-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin: 10px 0; }
+.cs-card > summary { cursor: pointer; padding: 12px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; list-style: none; }
+.cs-card > summary::-webkit-details-marker { display: none; }
+.cs-card[open] > summary { border-bottom: 1px solid var(--line); }
+.cs-name { font-weight: 700; min-width: 210px; color: var(--blue); }
+.cs-tex { overflow-x: auto; flex: 1; }
+.cs-body { padding: 4px 16px 14px; }
+.cs-body h4 { margin: 12px 0 4px; color: var(--muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: .08em; }
+.flash { background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 22px; text-align: center; max-width: 760px; margin: 14px auto; }
+.flash-title { color: var(--blue); }
+.flash .tex-block { text-align: center; }
+.flash .row { justify-content: center; }
+.rule .tex-block { padding: 2px 0; }
+.ex-step { border-left: 4px solid var(--orange); padding: 2px 12px; margin: 8px 0; }
+.weak { color: var(--warn-line); font-weight: 600; }
+.big-num { font-size: 2rem; font-weight: 800; margin: 4px 0; color: var(--orange); }
+.plan-row { display: flex; gap: 10px; padding: 8px 4px; border-bottom: 1px dashed var(--line); cursor: pointer; align-items: flex-start; }
+.plan-row.done span { opacity: .55; text-decoration: line-through; }
+
+.cs-tex { scrollbar-width: none; }
+.cs-tex::-webkit-scrollbar { display: none; }

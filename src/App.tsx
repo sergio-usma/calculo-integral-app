@@ -1,10 +1,13 @@
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
 import { AgentProvider, useAgent } from './agent/AgentContext'
 import { AgentPanel } from './components/AgentPanel'
+import { AlgebraHome, AlgebraLesson } from './pages/Algebra'
+import { Cheatsheet } from './pages/Cheat'
 import { Config } from './pages/Config'
 import { Exam } from './pages/Exam'
 import { Casio, Home, Practica, Taller, TallerItem } from './pages/Pages'
 import { Quiz } from './pages/Quiz'
+import { Study } from './pages/Study'
 
 function AgentButton() {
   const a = useAgent()
@@ -35,9 +38,9 @@ export default function App() {
             <NavLink to="/quiz/1/G1">④ Quiz guiado (TDAH)</NavLink>
             <NavLink to="/examen">⑤ Modo examen</NavLink>
             <NavLink to="/config">⚙ Configuración · Agente IA</NavLink>
-            <div className="soon">Próximamente</div>
-            <span className="disabled">⑥ Cheatsheet explicado</span>
-            <span className="disabled">⑦ Álgebra desde cero</span>
+            <NavLink to="/cheatsheet">⑥ Cheatsheet explicado</NavLink>
+            <NavLink to="/algebra">⑦ Álgebra desde cero</NavLink>
+            <NavLink to="/estudio">⑧ Estudio y progreso</NavLink>
           </nav>
           <main>
             <Routes>
@@ -51,6 +54,10 @@ export default function App() {
               <Route path="/quiz/:fam/:level" element={<Quiz />} />
               <Route path="/examen" element={<Exam />} />
               <Route path="/config" element={<Config />} />
+              <Route path="/cheatsheet" element={<Cheatsheet />} />
+              <Route path="/algebra" element={<AlgebraHome />} />
+              <Route path="/algebra/:id" element={<AlgebraLesson />} />
+              <Route path="/estudio" element={<Study />} />
             </Routes>
           </main>
           <AgentPanel />

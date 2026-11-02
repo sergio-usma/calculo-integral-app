@@ -56,8 +56,22 @@ export function Home() {
         <h3>🐍 Para quien programa</h3>
         <p>Cada ejercicio trae su <b>versión en Python (SymPy)</b>, bloque por bloque, que puedes ejecutar en el navegador, copiar o descargar. Abre cualquier ejercicio y busca la pestaña <b>“Python paso a paso”</b>.</p>
       </div>
-      <div className="panel note warn">
-        <b>Estado:</b> quedan pendientes el cheatsheet explicado, el álgebra desde cero y el modo offline (PWA).
+      <div className="grid-3">
+        <Link className="card big" to="/cheatsheet">
+          <h3>⑥ Cheatsheet explicado</h3>
+          <p>Cada fórmula con su porqué, un ejemplo y una frase para recordarla. Con tarjetas de repaso espaciado.</p>
+        </Link>
+        <Link className="card big" to="/algebra">
+          <h3>⑦ Álgebra desde cero</h3>
+          <p>Signos, fracciones, potencias, factorizar, despejar, trigonometría y logaritmos, con práctica y diagnóstico.</p>
+        </Link>
+        <Link className="card big" to="/estudio">
+          <h3>⑧ Estudio y progreso</h3>
+          <p>Plan para antes del examen, técnicas para la atención y la memoria, y tu racha.</p>
+        </Link>
+      </div>
+      <div className="panel note tip">
+        <b>Sin internet:</b> después de la primera visita la app queda guardada en el navegador y funciona offline (menos el agente de IA y “Ejecutar Python aquí”).
       </div>
     </div>
   )
