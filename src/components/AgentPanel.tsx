@@ -16,6 +16,7 @@ const QUICK: [string, string][] = [
 export function AgentPanel() {
   const a = useAgent()
   const [text, setText] = useState('')
+  const [hist, setHist] = useState(false)
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
@@ -28,14 +29,30 @@ export function AgentPanel() {
     void a.send(t)
   }
   return (
-    <aside className="agent" aria-label="Agente de IA">
+    <aside className={`agent${a.wide ? ' wide' : ''}`} aria-label="Agente de IA">
       <div className="agent-head">
         <b>🤖 Agente tutor</b>
-        <span className="muted">{a.configured ? `${a.settings.model}` : 'sin configurar'}</span>
+        <span className="muted agent-model">{a.configured ? `${a.settings.model}` : 'sin configurar'}</span>
         <span className="spacer" />
-        <button className="btn-tiny" onClick={a.clear}>Limpiar</button>
+        <button className="btn-tiny" onClick={() => setHist((h) => !h)} aria-pressed={hist} aria-label="Historial" title="Historial">🕘</button>
+        <button className="btn-tiny" onClick={() => { a.newChat(); setHist(false) }} aria-label="Nuevo chat" title="Nuevo chat (archiva el actual)">＋</button>
+        <button className="btn-tiny expand-btn" onClick={() => a.setWide(!a.wide)} aria-pressed={a.wide} aria-label="Expandir" title="Expandir">{a.wide ? '⤡' : '⤢'}</button>
         <button className="btn-tiny" onClick={() => a.setOpen(false)} aria-label="Cerrar">✕</button>
       </div>
+      {hist && (
+        <div className="agent-hist" role="list">
+          {a.sessions.length === 0 && <p className="muted">Aún no hay conversaciones guardadas.</p>}
+          {a.sessions.map((s) => (
+            <div key={s.id} className="hist-item" role="listitem">
+              <button className="hist-open" onClick={() => { a.loadSession(s.id); setHist(false) }}>
+                <b>{s.title}</b>
+                <span className="muted small">{new Date(s.updatedAt).toLocaleString()} · {s.messages.length} msj</span>
+              </button>
+              <button className="btn-tiny" onClick={() => a.deleteSession(s.id)} aria-label="Borrar conversación">🗑</button>
+            </div>
+          ))}
+        </div>
+      )}
       {!a.configured && (
         <div className="note warn">
           Falta tu API key o el ID del modelo. <Link to="/config" onClick={() => a.setOpen(false)}>Ir a Configuración</Link>

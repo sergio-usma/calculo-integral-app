@@ -4,6 +4,8 @@ import { streamChat } from './client'
 import type { ChatMessage } from './client'
 import { isConfigured, loadSettings, saveSettings } from './settings'
 import type { Settings } from './settings'
+import { loadSessions, saveSessions, upsertSession } from './history'
+import type { Session } from './history'
 
 export interface ProblemCtx {
   id: string
@@ -43,15 +45,23 @@ interface Ctx {
   selectRef: (r: Ref | null) => void
   send: (text: string, extraContext?: string) => Promise<void>
   stop: () => void
-  clear: () => void
+  /** Archiva el chat actual y empieza uno nuevo. */
+  newChat: () => void
+  sessions: Session[]
+  loadSession: (id: string) => void
+  deleteSession: (id: string) => void
+  wide: boolean
+  setWide: (v: boolean) => void
 }
 
 const C = createContext<Ctx | null>(null)
 
-export const SYSTEM = `Eres un tutor de Cálculo Integral para un estudiante universitario que parte de cero (sin base fuerte de álgebra), con poca memoria y posible TDAH. Responde SIEMPRE en español.
+export const SYSTEM = String.raw`Eres un tutor de Cálculo Integral para un estudiante universitario que parte de cero (sin base fuerte de álgebra), con poca memoria y posible TDAH. Responde SIEMPRE en español.
 Reglas:
 - Respuestas cortas, en viñetas o pasos numerados; una idea por viñeta. Nada de párrafos largos.
-- TODAS las fórmulas en LaTeX: en línea con $...$ y en bloque con $$...$$. Nunca uses texto plano para matemáticas.
+- TODAS las fórmulas en LaTeX, SOLO con estos delimitadores: en línea $...$ y en bloque $$...$$ (cada $$ va en su propia línea y SIEMPRE se cierra). Nunca uses \( \) ni \[ \]. Nunca escribas comandos LaTeX (\frac, \int, \theta…) fuera de $. Nunca uses texto plano para matemáticas.
+  Correcto: la integral es $\int \cos 2\theta\,d\theta=\frac{\sin 2\theta}{2}+C$.
+  Incorrecto: la integral es \int \cos 2\theta d\theta = \frac{\sin 2\theta}{2}$$
 - Explica el álgebra implícita (signos, fracciones, potencias, factorización) sin saltarte pasos.
 - Si el estudiante hace referencia a una línea (L = línea del procedimiento matemático, P = línea de código Python), explica ESA línea con detalle: qué hace, por qué, y qué sale de la anterior.
 - Si hay un código Python, relaciona cada línea con el paso matemático equivalente.
@@ -75,6 +85,13 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   const [problem, setProblem] = useState<ProblemCtx | null>(null)
   const [ref, setRef] = useState<Ref | null>(null)
   const abort = useRef<AbortController | null>(null)
+  const [sessions, setSessions] = useState<Session[]>(loadSessions)
+  const sessionId = useRef<string | null>(null)
+  const [wide, setWideS] = useState(() => localStorage.getItem('ci.agent.wide') === '1')
+  const setWide = useCallback((v: boolean) => {
+    setWideS(v)
+    localStorage.setItem('ci.agent.wide', v ? '1' : '0')
+  }, [])
 
   const setSettings = useCallback((s: Settings) => {
     setS(s)
@@ -174,9 +191,48 @@ ${buildContext(problem, refs, extraContext)}` },
   )
 
   const stop = useCallback(() => abort.current?.abort(), [])
-  const clear = useCallback(() => {
+
+  // Guarda la conversación en el historial cuando termina de responder.
+  useEffect(() => {
+    if (busy || !messages.some((m) => m.role === 'user')) return
+    if (!sessionId.current) sessionId.current = `s${Date.now().toString(36)}`
+    const first = messages.find((m) => m.role === 'user')?.content ?? 'Chat'
+    setSessions((prev) => {
+      const next = upsertSession(prev, {
+        id: sessionId.current!,
+        title: first.replace(/\s+/g, ' ').slice(0, 60),
+        problemId: problemRef.current?.id,
+        updatedAt: Date.now(),
+        messages,
+      })
+      saveSessions(next)
+      return next
+    })
+  }, [messages, busy])
+
+  const newChat = useCallback(() => {
     abort.current?.abort()
+    sessionId.current = null
     setMessages([])
+  }, [])
+  const loadSession = useCallback((id: string) => {
+    const s = loadSessions().find((x) => x.id === id)
+    if (!s) return
+    abort.current?.abort()
+    sessionId.current = s.id
+    nextId.current = Math.max(0, ...s.messages.map((m) => m.id)) + 1
+    setMessages(s.messages)
+  }, [])
+  const deleteSession = useCallback((id: string) => {
+    setSessions((prev) => {
+      const next = prev.filter((x) => x.id !== id)
+      saveSessions(next)
+      return next
+    })
+    if (sessionId.current === id) {
+      sessionId.current = null
+      setMessages([])
+    }
   }, [])
 
   const value = useMemo<Ctx>(
@@ -194,9 +250,14 @@ ${buildContext(problem, refs, extraContext)}` },
       selectRef: setRef,
       send,
       stop,
-      clear,
+      newChat,
+      sessions,
+      loadSession,
+      deleteSession,
+      wide,
+      setWide,
     }),
-    [settings, setSettings, open, messages, busy, problem, ref, send, stop, clear],
+    [settings, setSettings, open, messages, busy, problem, ref, send, stop, newChat, sessions, loadSession, deleteSession, wide, setWide],
   )
   return <C.Provider value={value}>{children}</C.Provider>
 }

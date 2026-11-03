@@ -6,7 +6,9 @@ import { writeFileSync } from 'node:fs'
 
 const OUT = process.argv[2] ?? '.'
 const MODE = process.argv[3] ?? 'ok'
-const chunks = ['Claro: en **L2** ', 'usamos $u=x^2+1$ y ', 'luego $$\int u^5\,du=\frac{u^6}{6}$$ ', 'y un $ suelto \frac{ roto $$ ']
+const W = Number(process.argv[4] ?? 1500), H = Number(process.argv[5] ?? 1000)
+const R = String.raw
+const chunks = [R`Línea L7\n`.replace('\n', '\n'), R`Sea \(u=x^2+1\) y luego \[\int u^5\,du=\frac{u^6}{6}\]`, '\n- Integrar ', R`\int\cos 2\theta\,d\theta=\frac{\sin 2\theta}{2}`, ' y listo.\n', R`=\frac{1}{2}\cos 2\theta\cdot 2 =\cos 2\theta$$`, '\n', R`Total $$\theta+\frac{\sin 2\theta}{2}+C$$ y un $ suelto`]
 const srv = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Headers', '*')
   if (req.method === 'OPTIONS') return res.end()
@@ -38,7 +40,7 @@ const send = (method, params = {}) => new Promise((res) => { const i = ++id; pen
 const js = async (e) => (await send('Runtime.evaluate', { expression: e, returnByValue: true, awaitPromise: true })).result?.result?.value
 const shot = async (n) => { const r = await send('Page.captureScreenshot', { format: 'png' }); writeFileSync(`${OUT}/${n}.png`, Buffer.from(r.result.data, 'base64')) }
 await send('Page.enable'); await send('Runtime.enable')
-await send('Emulation.setDeviceMetricsOverride', { width: 1500, height: 1000, deviceScaleFactor: 1, mobile: false })
+await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: W < 800 })
 await send('Page.navigate', { url: 'http://localhost:4173/#/taller/1' }); await sleep(1200)
 await js(`localStorage.setItem('ci.settings.v1', JSON.stringify({provider:'custom',baseUrl:'http://localhost:8787/v1',apiKey:'test',model:'m'}))`)
 await send('Page.navigate', { url: 'http://localhost:4173/#/taller/2' }); await send('Page.reload'); await sleep(3000)
@@ -46,11 +48,29 @@ await js(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()=
 await js(`(()=>{const el=document.querySelector('.agent textarea'); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(el,'Explica @L2 por favor'); el.dispatchEvent(new Event('input',{bubbles:true}))})()`)
 await js(`[...document.querySelectorAll('.agent button')].find(b=>b.textContent==='Enviar')?.click()`)
 await sleep(2500)
+await sleep(500)
+const q = (e) => js(e)
+const geo = await q(`(()=>{const a=document.querySelector('.agent').getBoundingClientRect();return {w:Math.round(a.width),h:Math.round(a.height),bottom:Math.round(a.bottom),vh:innerHeight,pageScroll:document.documentElement.scrollHeight>innerHeight+1}})()`)
+console.log('geo=', JSON.stringify(geo))
+console.log('katex=', await q(`document.querySelectorAll('.agent .msg.assistant .katex').length`), 'katex-error=', await q(`document.querySelectorAll('.agent .katex-error').length`))
+console.log('texto-crudo=', await q(`[...document.querySelectorAll('.agent .msg.assistant')].map(m=>{const c=m.cloneNode(true);c.querySelectorAll('.katex').forEach(k=>k.remove());return c.innerText}).join('|').match(/\\[a-z]+|\$\$/g)`))
+await shot('agent_' + MODE + '_' + W)
+if (W >= 800 && MODE === 'ok') {
+  await js(`document.querySelector('.expand-btn').click()`); await sleep(300)
+  console.log('ancho-expandido=', await q(`Math.round(document.querySelector('.agent').getBoundingClientRect().width)`))
+  await js(`document.querySelector('.expand-btn').click()`)
+}
+if (MODE === 'ok') {
+  await js(`document.querySelector('[aria-label="Nuevo chat"]').click()`); await sleep(300)
+  await js(`document.querySelector('[aria-label="Historial"]').click()`); await sleep(300)
+  console.log('historial=', await q(`document.querySelectorAll('.hist-item').length`))
+  await js(`document.querySelector('.hist-open').click()`); await sleep(300)
+  console.log('restaurado=', await q(`document.querySelectorAll('.agent .msg').length`))
+}
 const alive = await js(`!!document.querySelector('.agent .msg.assistant, .agent .msg.error') && document.body.innerText.length > 200`)
 console.log('vivo=', alive, '\nmensajes=', await js(`[...document.querySelectorAll('.agent .msg')].map(m=>m.className+': '+m.innerText.slice(0,150)).join(' || ')`))
 console.log('errores:', errors.length ? errors.join('\n---\n') : 'ninguno')
 console.log('body=', ((await js('document.body.innerText')) ?? '').slice(0, 300))
 console.log('agent=', await js("document.querySelector('.agent')?.innerText"))
-await shot('agent_' + MODE)
 ws.close(); edge.kill(); srv.close()
 process.exit(alive && !errors.length ? 0 : 1)
