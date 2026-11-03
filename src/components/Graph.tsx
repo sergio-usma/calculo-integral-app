@@ -108,6 +108,11 @@ export function Graph({ curves, regions = [], points = [], view, vline, rects = 
     const k = e.deltaY > 0 ? 1.12 : 1 / 1.12
     setV([mx - (mx - x0) * k, mx + (x1 - mx) * k, my - (my - y0) * k, my + (y1 - my) * k])
   }
+  const zoomBy = (k: number) => {
+    const cx = (x0 + x1) / 2
+    const cy = (y0 + y1) / 2
+    setV([cx - (cx - x0) * k, cx + (x1 - cx) * k, cy - (cy - y0) * k, cy + (y1 - cy) * k])
+  }
   const onDown = (e: React.PointerEvent<SVGSVGElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId)
     drag.current = { x: e.clientX, y: e.clientY, v, moved: false }
@@ -134,7 +139,7 @@ export function Graph({ curves, regions = [], points = [], view, vline, rects = 
 
   return (
     <div className="graph">
-      <svg viewBox={`0 0 ${W} ${H}`} onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} role="img" aria-label="Gráfica interactiva">
+      <svg viewBox={`0 0 ${W} ${H}`} onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => (drag.current = null)} role="img" aria-label="Gráfica interactiva">
         <rect width={W} height={H} className="g-bg" />
         {xt.map((t) => (
           <g key={`x${t}`}>
@@ -192,10 +197,12 @@ export function Graph({ curves, regions = [], points = [], view, vline, rects = 
               <i style={{ background: c.color }} /> {c.label}
             </span>
           ))}
+        <button className="btn-tiny" onClick={() => zoomBy(1 / 1.4)} aria-label="Acercar">＋</button>
+        <button className="btn-tiny" onClick={() => zoomBy(1.4)} aria-label="Alejar">－</button>
         <button className="btn-tiny" onClick={() => setV(view)}>
           ⟲ restablecer vista
         </button>
-        <span className="muted">Arrastra para mover · rueda para hacer zoom</span>
+        <span className="muted">Arrastra para mover · ＋/－ o rueda para zoom</span>
       </div>
     </div>
   )
