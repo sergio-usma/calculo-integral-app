@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useAgent } from '../agent/AgentContext'
+import { LATEX_HINT, useAgent } from '../agent/AgentContext'
 import { pythonFor } from '../engine/python'
 import { LEVEL_LABEL } from '../engine/types'
 import type { Problem } from '../engine/types'
@@ -55,7 +55,7 @@ export function ProblemView({ p, label }: { p: Problem; label?: string }) {
           </button>
         ))}
       </nav>
-      {tab === 'steps' && <StepDebugger steps={p.steps} startAt={Number(sp.get('line') ?? 0)} onSelectLine={(n, flat) => agent.selectRef({ kind: 'L', n, text: flat[n - 1].tex })} onAsk={(n) => void agent.send(`Explícame con detalle la línea @L${n}: qué hace, por qué es válida y qué álgebra hay escondida.`)} />}
+      {tab === 'steps' && <StepDebugger steps={p.steps} startAt={Number(sp.get('line') ?? 0)} onSelectLine={(n, flat) => agent.selectRef({ kind: 'L', n, text: flat[n - 1].tex })} onAsk={(n) => void agent.send(`Explícame con detalle la línea @L${n}: qué hace, por qué es válida y qué álgebra hay escondida.` + LATEX_HINT)} />}
       {tab === 'graph' && (p.kind === 'area' ? <AreaViz p={p} /> : <IntegralViz p={p} />)}
       {tab === 'casio' && (
         <div className="casio-list">

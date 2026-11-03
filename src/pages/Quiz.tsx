@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAgent } from '../agent/AgentContext'
+import { LATEX_HINT, useAgent } from '../agent/AgentContext'
 import { Md, Tex } from '../components/Tex'
 import { FAMILIES, FAMILY_TITLE, LEVELS, TALLER_LABEL, generate } from '../engine'
 import { buildQuiz, ghostOf, texPreview } from '../engine/quiz'
@@ -241,7 +241,7 @@ function QuizRun({ p, qs }: { p: ReturnType<typeof generate>; qs: Question[] }) 
               disabled={agent.busy || result === 'ok'}
               onClick={() =>
                 void agent.send(
-                  `Estoy en el quiz, pregunta: "${q.label}". Mi intento actual es: "${text || '(nada todavía)'}". Dame UNA pista corta sobre qué sigue, sin darme la respuesta.`,
+                  `Estoy en el quiz, pregunta: "${q.label}". Mi intento actual es: "${text || '(nada todavía)'}". Dame UNA pista corta sobre qué sigue, sin darme la respuesta.` + LATEX_HINT,
                   `PREGUNTA ACTUAL DEL QUIZ: ${q.prompt}\nRESPUESTA CORRECTA (SECRETA, NO LA REVELES NI LA DIGAS COMPLETA): ${q.expected}`,
                 )
               }

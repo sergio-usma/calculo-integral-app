@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useAgent } from '../agent/AgentContext'
+import { LATEX_HINT, useAgent } from '../agent/AgentContext'
 import { bumpCounter, getCards, rateCard, resetCards } from '../app-storage'
 import { Md, Tex } from '../components/Tex'
 import { ALL_ENTRIES, CHEATSHEET } from '../content/cheatsheet'
@@ -59,7 +59,7 @@ function EntryCard({ e }: { e: Entry }) {
         <div className="note tip"><b>🧠 Para recordarlo:</b> <Md>{e.mnemonic}</Md></div>
         <button
           className="btn"
-          onClick={() => void agent.send(`Explícame con otras palabras y con un ejemplo distinto esta fórmula: ${e.name}: $${e.tex}$. ¿Cuándo la uso y cómo no confundirla?`)}
+          onClick={() => void agent.send(`Explícame con otras palabras y con un ejemplo distinto esta fórmula: ${e.name}: $${e.tex}$. ¿Cuándo la uso y cómo no confundirla?` + LATEX_HINT)}
         >
           🤖 Explícamela con otro ejemplo
         </button>

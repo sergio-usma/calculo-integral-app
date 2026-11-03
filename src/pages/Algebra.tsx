@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useAgent } from '../agent/AgentContext'
+import { LATEX_HINT, useAgent } from '../agent/AgentContext'
 import { getAlg, recordAlg } from '../app-storage'
 import { Md, Tex } from '../components/Tex'
 import { LESSONS, diagnostic } from '../engine/algebra'
@@ -130,7 +130,7 @@ export function AlgebraLesson() {
           {res ? <button className="btn btn-primary" onClick={another}>Otro ejercicio ▶</button> : <button className="btn btn-primary" onClick={check} disabled={!ans.trim()}>Comprobar</button>}
           <button className="btn" onClick={() => setHint(true)}>💡 Pista</button>
           <button className="btn" onClick={another}>Saltar</button>
-          <button className="btn" onClick={() => void agent.send(`Soy principiante. Explícame paso a paso, con un ejemplo distinto, esta idea de álgebra: ${l.title}. Mi ejercicio actual era: ${ex.prompt}`)}>🤖 Explícame más</button>
+          <button className="btn" onClick={() => void agent.send(`Soy principiante. Explícame paso a paso, con un ejemplo distinto, esta idea de álgebra: ${l.title}. Mi ejercicio actual era: ${ex.prompt}` + LATEX_HINT)}>🤖 Explícame más</button>
         </div>
       </div>
     </div>

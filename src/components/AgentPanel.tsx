@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAgent } from '../agent/AgentContext'
+import { LATEX_HINT, useAgent } from '../agent/AgentContext'
 import { ErrorBoundary } from './ErrorBoundary'
 import { Md, Tex } from './Tex'
 
@@ -58,6 +58,7 @@ export function AgentPanel() {
           Falta tu API key o el ID del modelo. <Link to="/config" onClick={() => a.setOpen(false)}>Ir a Configuración</Link>
         </div>
       )}
+      <div className="agent-body">
       <div className="agent-ctx">
         {a.problem ? (
           <>
@@ -81,7 +82,7 @@ export function AgentPanel() {
       </div>
       <div className="quick">
         {QUICK.map(([l, q]) => (
-          <button key={l} className="chip" disabled={a.busy} onClick={() => void a.send(q)}>
+          <button key={l} className="chip" disabled={a.busy} onClick={() => void a.send(q + LATEX_HINT)}>
             {l}
           </button>
         ))}
@@ -110,6 +111,7 @@ export function AgentPanel() {
           </div>
         ))}
         <div ref={end} />
+      </div>
       </div>
       <div className="agent-input">
         <textarea

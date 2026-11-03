@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useAgent } from '../agent/AgentContext'
+import { LATEX_HINT, useAgent } from '../agent/AgentContext'
 import { pythonFor } from '../engine/python'
 import type { Problem } from '../engine/types'
 import { runPython } from './pyrun'
@@ -130,7 +130,7 @@ export function PythonView({ p }: { p: Problem }) {
         <div className="panel">
           <b>Línea P{sel}</b> <code>{lines[sel - 1]}</code>
           <div className="row tight">
-            <button className="btn" onClick={() => void agent.send(`Explícame con detalle la línea @P${sel} del código: qué hace y a qué paso matemático corresponde.`)}>🤖 Explícame @P{sel}</button>
+            <button className="btn" onClick={() => void agent.send(`Explícame con detalle la línea @P${sel} del código: qué hace y a qué paso matemático corresponde.` + LATEX_HINT)}>🤖 Explícame @P{sel}</button>
           </div>
         </div>
       )}

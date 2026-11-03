@@ -69,6 +69,9 @@ Reglas:
 - En modo quiz o cuando pidan pista: NO reveales la respuesta completa; da una pista graduada.
 - La calculadora del estudiante es una Casio fx-570ES PLUS: cuando ayude, indica cómo verificar con ella.`
 
+/** Se añade a los prompts predefinidos para que el modelo responda siempre con fórmulas en LaTeX. */
+export const LATEX_HINT = ' Escribe TODAS las expresiones y fórmulas en LaTeX ($...$ en línea, $$...$$ en bloque).'
+
 function buildContext(problem: ProblemCtx | null, refs: Ref[], extra?: string): string {
   if (!problem) return 'No hay un ejercicio abierto ahora mismo.'
   const lines = problem.mathLines.map((t, i) => `L${i + 1}: ${t}`).join('\n')
