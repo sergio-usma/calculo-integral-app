@@ -347,3 +347,8 @@ input[type='range'] { width: 100%; max-width: 100%; margin: 0; display: block; }
 .sv-hole { fill: var(--code-bg); stroke: #000; stroke-width: 1.2; }
 .sv-radius { stroke: #d93025; stroke-width: 2; }
 .sv-radius-in { stroke: #2e8b57; }
+.stage-bar .stage-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.value-table { margin-top: 10px; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+.value-table table { border-collapse: collapse; font-size: 0.92rem; margin-top: 6px; }
+.value-table th, .value-table td { border: 1px solid var(--line); padding: 4px 10px; text-align: center; white-space: nowrap; }

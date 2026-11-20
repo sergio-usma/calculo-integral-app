@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { fn, fmtNum, simpson } from '../engine/util'
 import type { Problem } from '../engine/types'
 import { Graph } from './Graph'
-import { Tex } from './Tex'
+import { Md, Tex } from './Tex'
 
 const colorOf = (i: number) => (i === 0 ? '#9ec5f4' : '#f5b7b1')
 
@@ -216,6 +216,8 @@ function SolidView({ lo, hi, R, r, washer, view, x, dx, slices }: { lo: number; 
   )
 }
 
+const STAGES = 8
+
 /** Región, elemento de integración (disco/arandela) y sólido de revolución sobre el eje X. */
 export function VolumeViz({ p }: { p: Problem }) {
   const a = p.area!
@@ -230,35 +232,93 @@ export function VolumeViz({ p }: { p: Problem }) {
   const [dxf, setDxf] = useState(0.06)
   const [n, setN] = useState(8)
   const [showSum, setShowSum] = useState(false)
+  const [stage, setStage] = useState(STAGES - 1)
   const dx = dxf * span
   const Rx = R(x)
   const rx = r(x)
   const rect = Number.isFinite(Rx) && Number.isFinite(rx) ? { x0: x - dx / 2, x1: x + dx / 2, y0: rx, y1: Rx } : null
   const rects = useMemo(() => {
-    if (!showSum) return []
+    if (!showSum || stage < 6) return []
     const w = span / n
     return Array.from({ length: n }, (_, i) => {
       const m = lo + (i + 0.5) * w
       return { x0: lo + i * w, x1: lo + (i + 1) * w, y0: r(m), y1: R(m) }
     })
-  }, [showSum, n, span, lo, R, r])
+  }, [showSum, stage, n, span, lo, R, r])
   const sum = rects.reduce((s, q) => s + Math.PI * (q.y1 ** 2 - q.y0 ** 2) * (q.x1 - q.x0), 0)
   const dV = rect ? Math.PI * (Rx ** 2 - rx ** 2) * dx : 0
+
+  // construcción por etapas
+  const table = a.table ?? []
+  const fns = useMemo(() => a.curves.map((c) => fn(c.expr)), [a.curves])
+  const tablePts = useMemo(
+    () => (stage >= 1 ? a.curves.flatMap((_, i) => table.map((t) => ({ x: t.x, y: fns[i](t.x), label: '' }))).filter((q) => Number.isFinite(q.y)) : []),
+    [stage, a.curves, table, fns],
+  )
+  const shownCurves = useMemo(() => a.curves.filter((_, i) => (i === 0 ? stage >= 2 : stage >= 3)).map((c) => ({ expr: c.expr, color: c.color, label: c.label })), [a.curves, stage])
+  const nCurves = a.curves.length
+  const captions = [
+    '**1. Ejes y escala.** Dibuja el eje X (horizontal) y el eje Y (vertical) con la misma escala. El eje X es el **eje de giro**.',
+    '**2. Puntos de la tabla.** Marca cada par (x, y) de la tabla de valores (abajo). Cada curva tiene los suyos.',
+    `**3. Une los puntos de ${a.curves[0].label === 'f' ? 'f' : 'la curva'}** con un trazo suave, siguiendo la forma que reconociste.`,
+    nCurves > 1 ? '**4. Une los puntos de g** con otro color. Ya se ven las dos curvas.' : '**4. Frontera con el eje X.** Esta región está limitada por la curva y por el eje X (y = 0)' + (a.vline !== undefined ? ' y la recta vertical marcada.' : '.'),
+    '**5. Marca y rotula los puntos de corte.** Son los límites de integración a y b.',
+    '**6. Sombrea la región** encerrada entre las fronteras.',
+    '**7. Dibuja el elemento de integración:** un rectángulo vertical muy angosto (ancho dx). Muévelo con el control de posición.',
+    washer ? '**8. Gira alrededor del eje X:** el rectángulo dibuja una arandela (disco con agujero) y la región entera forma el sólido con hueco.' : '**8. Gira alrededor del eje X:** el rectángulo dibuja un disco y la región entera forma el sólido.',
+  ]
+  const g = (k: number) => stage >= k
   return (
     <div>
-      <p className="muted">
-        <b>① Región plana</b> (con el rectángulo = elemento de integración) y <b>② el sólido</b> que se forma al girarla sobre el eje X.
-      </p>
+      <div className="panel stage-bar">
+        <b>Construye la gráfica paso a paso</b>
+        <div className="stage-row">
+          <button className="btn" onClick={() => setStage(0)} disabled={stage === 0}>⏮ Empezar</button>
+          <button className="btn" onClick={() => setStage((k) => Math.max(0, k - 1))} disabled={stage === 0}>◀ Atrás</button>
+          <button className="btn btn-primary" onClick={() => setStage((k) => Math.min(STAGES - 1, k + 1))} disabled={stage === STAGES - 1}>Siguiente ▶</button>
+          <button className="btn" onClick={() => setStage(STAGES - 1)} disabled={stage === STAGES - 1}>⏭ Terminar</button>
+          <span className="muted">Etapa {stage + 1} de {STAGES}</span>
+        </div>
+        <Md>{captions[stage]}</Md>
+      </div>
       <Graph
-        curves={a.curves.map((c) => ({ expr: c.expr, color: c.color, label: c.label }))}
-        regions={[{ ...reg, color: '#9ec5f4' }]}
-        points={a.points}
+        curves={shownCurves}
+        regions={g(5) ? [{ ...reg, color: '#9ec5f4' }] : []}
+        points={[...tablePts, ...(g(4) ? a.points : [])]}
         view={a.view}
-        vline={a.vline}
+        vline={g(3) ? a.vline : undefined}
         rects={rects}
-        highlightRect={rect}
+        highlightRect={g(6) ? rect : null}
       />
-      <SolidView lo={lo} hi={hi} R={R} r={r} washer={washer} view={[a.view[0], a.view[1], a.view[2], a.view[3]]} x={x} dx={dx} slices={rects.map((q) => ({ x0: q.x0, x1: q.x1 }))} />
+      {g(1) && table.length > 0 && (
+        <div className="panel value-table">
+          <b>Tabla de valores</b>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th><Tex>{'x'}</Tex></th>
+                  {table.map((t) => (
+                    <th key={t.x}><Tex>{t.label}</Tex></th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {a.curves.map((c, i) => (
+                  <tr key={c.label}>
+                    <th style={{ color: c.color }}>{c.label === 'f' || c.label === 'g' ? `${c.label}(x)` : 'y'}</th>
+                    {table.map((t) => {
+                      const y = fns[i](t.x)
+                      return <td key={t.x}>{Number.isFinite(y) ? fmtNum(y, 2) : '—'}</td>
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {g(7) && <SolidView lo={lo} hi={hi} R={R} r={r} washer={washer} view={[a.view[0], a.view[1], a.view[2], a.view[3]]} x={x} dx={dx} slices={rects.map((q) => ({ x0: q.x0, x1: q.x1 }))} />}
       <div className="panel controls">
         <div className="legend-tex">
           {a.curves.map((c) => (
@@ -268,15 +328,19 @@ export function VolumeViz({ p }: { p: Problem }) {
           ))}
         </div>
         {a.note && <p className="muted">{a.note}</p>}
-        <label>
-          Posición del elemento: <b>x = {fmtNum(x, 3)}</b>
-          <input type="range" min={lo} max={hi} step={span / 200} value={x} onChange={(e) => setX(Number(e.target.value))} />
-        </label>
-        <label>
-          Grosor <Tex>{'dx'}</Tex>: <b>{fmtNum(dx, 3)}</b>
-          <input type="range" min={0.01} max={0.25} step={0.01} value={dxf} onChange={(e) => setDxf(Number(e.target.value))} />
-        </label>
-        {rect && (
+        {g(6) && (
+          <>
+            <label>
+              Posición del elemento: <b>x = {fmtNum(x, 3)}</b>
+              <input type="range" min={lo} max={hi} step={span / 200} value={x} onChange={(e) => setX(Number(e.target.value))} />
+            </label>
+            <label>
+              Grosor <Tex>{'dx'}</Tex>: <b>{fmtNum(dx, 3)}</b>
+              <input type="range" min={0.01} max={0.25} step={0.01} value={dxf} onChange={(e) => setDxf(Number(e.target.value))} />
+            </label>
+          </>
+        )}
+        {g(6) && rect && (
           <p className="calc">
             {washer ? (
               <>
@@ -289,10 +353,12 @@ export function VolumeViz({ p }: { p: Problem }) {
             )}
           </p>
         )}
-        <label className="check">
-          <input type="checkbox" checked={showSum} onChange={(e) => setShowSum(e.target.checked)} /> Mostrar la suma de {washer ? 'arandelas' : 'discos'} (idea de la integral)
-        </label>
-        {showSum && (
+        {g(6) && (
+          <label className="check">
+            <input type="checkbox" checked={showSum} onChange={(e) => setShowSum(e.target.checked)} /> Mostrar la suma de {washer ? 'arandelas' : 'discos'} (idea de la integral)
+          </label>
+        )}
+        {showSum && g(6) && (
           <>
             <label>
               Número de {washer ? 'arandelas' : 'discos'}: <b>{n}</b>
@@ -303,9 +369,11 @@ export function VolumeViz({ p }: { p: Problem }) {
             </p>
           </>
         )}
-        <p className="muted">
-          En la vista del sólido, la <b>cara circular</b> naranja es lo que ve un observador al mirar la rebanada de frente: {washer ? 'un círculo grande (radio R) con un círculo hueco (radio r)' : 'un círculo de radio R'}.
-        </p>
+        {g(7) && (
+          <p className="muted">
+            En la vista del sólido, la <b>cara circular</b> naranja es lo que ve un observador al mirar la rebanada de frente: {washer ? 'un círculo grande (radio R) con un círculo hueco (radio r)' : 'un círculo de radio R'}.
+          </p>
+        )}
       </div>
     </div>
   )

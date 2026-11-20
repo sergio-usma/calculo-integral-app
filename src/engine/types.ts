@@ -50,6 +50,8 @@ export interface AreaInfo {
   view: [number, number, number, number]
   value: number
   vline?: number
+  /** Columnas de la tabla de valores usada para trazar la gráfica (label en LaTeX). */
+  table?: { x: number; label: string }[]
   /** Nota que se muestra bajo la gráfica (p. ej. "ejemplo con r = 3"). */
   note?: string
 }

@@ -15,14 +15,14 @@ export function StepDebugger({ steps, onSelectLine, onAsk, startAt = 0 }: { step
     steps.forEach((s, si) => s.lines.forEach((tex, li) => out.push({ n: out.length + 1, step: si, tex, first: li === 0 })))
     return out
   }, [steps])
-  const [cur, setCur] = useState(startAt) // 0 = no ejecutado; k = líneas 1..k visibles
+  const [cur, setCur] = useState(() => Math.max(0, Math.min(startAt, steps.reduce((n, st) => n + st.lines.length, 0)))) // 0 = no ejecutado; k = líneas 1..k visibles
   const [bps, setBps] = useState<Set<number>>(new Set())
   const [sel, setSel] = useState<number | null>(null)
   const [focus, setFocus] = useState(false)
   const total = flat.length
 
   useEffect(() => {
-    setCur(startAt)
+    setCur(Math.max(0, Math.min(startAt, total)))
     setBps(new Set())
     setSel(null)
   }, [steps]) // eslint-disable-line react-hooks/exhaustive-deps
