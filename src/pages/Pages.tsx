@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { KeyChips } from '../components/KeyChips'
 import { ProblemView } from '../components/ProblemView'
 import { Md, Tex } from '../components/Tex'
-import { FAMILIES, FAMILY_TITLE, LEVELS, TALLER_LABEL, generate } from '../engine'
+import { ALL_FAMILIES, FAMILIES, FAMILY_TITLE, LEVELS, TALLER_LABEL, VOLUME_FAMILIES_IDS, generate } from '../engine'
 import { LEVEL_LABEL } from '../engine/types'
 import type { Level } from '../engine/types'
 
@@ -17,7 +17,7 @@ export function Home() {
       <div className="grid-3">
         <Link className="card big" to="/taller">
           <h3>① Taller resuelto</h3>
-          <p>Los 9 ejercicios del taller, línea por línea, con gráfica y verificación.</p>
+          <p>Los 9 ejercicios del taller más el taller de volúmenes (discos y arandelas), línea por línea, con gráfica y verificación.</p>
         </Link>
         <Link className="card big" to="/practica">
           <h3>② Práctica con variantes</h3>
@@ -45,7 +45,7 @@ export function Home() {
         </Link>
         <Link className="card big" to="/examen">
           <h3>⑤ Modo examen</h3>
-          <p>6 integrales + 3 áreas con temporizador. En las áreas debes graficar y marcar los cortes.</p>
+          <p>6 integrales + 3 áreas + 2 volúmenes con temporizador. En áreas y volúmenes debes graficar y marcar los límites.</p>
         </Link>
         <Link className="card big" to="/config">
           <h3>⚙ Agente de IA</h3>
@@ -96,6 +96,22 @@ export function Taller() {
           )
         })}
       </div>
+      <h2>Taller de volúmenes: sólidos de revolución</h2>
+      <p className="lead">Gira una región plana sobre el eje X y calcula el volumen del sólido: <b>I</b> con discos (la esfera) y <b>II</b> con arandelas (región entre dos curvas).</p>
+      <div className="grid-3">
+        {VOLUME_FAMILIES_IDS.map((f) => {
+          const p = generate(f, 'T')
+          return (
+            <Link key={f} className="card" to={`/taller/${f}`}>
+              <span className="badge">Volumen {TALLER_LABEL[f].replace('V-', '')}</span>
+              <div className="card-tex">
+                <Tex>{p.statement}</Tex>
+              </div>
+              <small>{p.method}</small>
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -108,16 +124,16 @@ export function TallerItem() {
   return (
     <div className="page">
       <div className="crumbs">
-        <Link to="/taller">← Taller</Link> / Ejercicio {TALLER_LABEL[f]}
+        <Link to="/taller">← Taller</Link> / {f >= 10 ? 'Volumen' : 'Ejercicio'} {f >= 10 ? TALLER_LABEL[f].replace('V-', '') : TALLER_LABEL[f]}
       </div>
       <h1>
-        Ejercicio {TALLER_LABEL[f]} · {FAMILY_TITLE[f]}
+        {f >= 10 ? 'Volumen' : 'Ejercicio'} {f >= 10 ? TALLER_LABEL[f].replace('V-', '') : TALLER_LABEL[f]} · {FAMILY_TITLE[f]}
       </h1>
       <ProblemView p={p} label={TALLER_LABEL[f]} />
       <div className="row">
         {f > 1 && <button className="btn" onClick={() => nav(`/taller/${f - 1}`)}>← Anterior</button>}
         <button className="btn btn-primary" onClick={() => nav(`/practica/${f}/G1`)}>Practicar variantes de este ejercicio →</button>
-        {f < 9 && <button className="btn" onClick={() => nav(`/taller/${f + 1}`)}>Siguiente →</button>}
+        {f < 11 && <button className="btn" onClick={() => nav(`/taller/${f + 1}`)}>Siguiente →</button>}
       </div>
     </div>
   )
@@ -138,7 +154,7 @@ export function Practica() {
         <label>
           Ejercicio del taller
           <select value={f} onChange={(e) => { nav(`/practica/${e.target.value}/${lv}`); setSeed(1) }}>
-            {FAMILIES.map((x) => (
+            {ALL_FAMILIES.map((x) => (
               <option key={x} value={x}>
                 {TALLER_LABEL[x]} · {FAMILY_TITLE[x]}
               </option>
@@ -180,7 +196,8 @@ export function Casio() {
       <Block title="4. CALC: evaluar sin reescribir" keys={['f(X)', 'CALC', '3', '=']} text="Escribe la expresión una vez con X; CALC te pide el valor de X. Presiona = para evaluar y CALC de nuevo para probar otro valor. Perfecto para F(b) − F(a)." />
       <Block title="5. SOLVE: puntos de corte" keys={['f(X) − g(X)', 'SHIFT', 'CALC (SOLVE)', 'valor inicial', '=', '=']} text="La calculadora resuelve f(X) − g(X) = 0. Solo da UNA solución a la vez, cercana a tu valor inicial. Cambia el valor inicial para hallar los otros cortes. Con seno/coseno, ¡radianes!" />
       <Block title="6. TABLE: ver quién está arriba" keys={['MODE', '7 (TABLE)', 'f(X) − g(X)', '=', 'Start', '=', 'End', '=', 'Step', '=']} text="Muestra una tabla de valores. Positivo = f arriba; negativo = g arriba. Máximo 30 filas (si ves Stack ERROR, aumenta el paso). Para volver: MODE 1." />
-      <Block title="7. Fracciones, π, e, raíces y logaritmos" keys={['a b/c', 'SHIFT', '×10ˣ (π)', 'SHIFT', 'ln (eˣ)', '√', 'ln']} text="La tecla de fracción pone una fracción en la pantalla. π está en SHIFT + ×10ˣ. e^x en SHIFT + ln. Para convertir un resultado a decimal o fracción usa la tecla S⇔D." />
+      <Block title="7. Volumen de un sólido de revolución: π × ∫" keys={['SHIFT', '×10ˣ (π)', '×', '∫', '(R(X))² − (r(X))²', '▶', 'a', '▶', 'b', '=']} text="Para discos usa solo (R(X))²; para arandelas (R(X))² − (r(X))², siempre cada radio elevado al cuadrado por separado y con paréntesis. Multiplica por π fuera de la integral. Compara con tu resultado exacto usando S⇔D. Si hay seno o coseno, ¡radianes!" />
+      <Block title="8. Fracciones, π, e, raíces y logaritmos" keys={['a b/c', 'SHIFT', '×10ˣ (π)', 'SHIFT', 'ln (eˣ)', '√', 'ln']} text="La tecla de fracción pone una fracción en la pantalla. π está en SHIFT + ×10ˣ. e^x en SHIFT + ln. Para convertir un resultado a decimal o fracción usa la tecla S⇔D." />
       <div className="panel">
         <h3>Estrategia para el examen</h3>
         <ol>

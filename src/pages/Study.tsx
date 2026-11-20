@@ -12,9 +12,10 @@ const PLAN: { when: string; what: string; link?: string; to?: string }[] = [
   { when: 'Bloque 4 · 15 min', what: 'Ejercicio 5 (trigonométrica) con el triángulo dibujado en papel.', link: 'Ejercicio 5', to: '/taller/5' },
   { when: 'Bloque 5 · 15 min', what: 'Ejercicio 6 (fracciones parciales) y verifica A y B con el quiz.', link: 'Quiz', to: '/quiz/6/G1' },
   { when: 'Bloque 6 · 20 min', what: 'Áreas 7a, 7b y 7c: grafica a mano, marca cortes y verifica con la Casio.', link: 'Casio', to: '/casio' },
+  { when: 'Bloque 6b · 20 min', what: 'Volúmenes de revolución: taller I (esfera, discos) y II (arandelas). Dibuja el rectángulo y decide R y r antes de integrar.', link: 'Volumen I', to: '/taller/10' },
   { when: 'Bloque 7 · 15 min', what: 'Variantes “Gemela A/B” de lo que más te costó (sin mirar la solución).', link: 'Práctica', to: '/practica' },
   { when: 'Antes de dormir · 10 min', what: 'Tarjetas de memoria (solo las pendientes) y relee la tabla “qué método uso”. Dormir bien consolida lo aprendido.', link: 'Cheatsheet', to: '/cheatsheet' },
-  { when: 'Mañana · 30 min antes', what: 'Un modo examen corto: 2 integrales y 1 área. Respira, escribe primero el método.', link: 'Examen', to: '/examen' },
+  { when: 'Mañana · 30 min antes', what: 'Un modo examen corto: 2 integrales, 1 área y 1 volumen. Respira, escribe primero el método.', link: 'Examen', to: '/examen' },
 ]
 
 const TECHNIQUES = [

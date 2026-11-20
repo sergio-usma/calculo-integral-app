@@ -334,3 +334,16 @@ main p, main li, main h1, main h2, main h3, main h4, main label, main span:not(.
 .page, main > div { max-width: 100%; }
 input[type='range'] { width: 100%; max-width: 100%; margin: 0; display: block; }
 .controls label { overflow-wrap: anywhere; }
+
+/* ===== Sólidos de revolución ===== */
+.solid-view { margin-top: 10px; }
+.solid-view svg { cursor: default; touch-action: pan-y; }
+.sv-solid { fill: rgba(31, 95, 168, 0.16); stroke: var(--blue); stroke-width: 1.8; }
+.sv-axis { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 8 5; }
+.sv-rect { fill: rgba(249, 105, 50, 0.12); stroke: var(--orange); stroke-width: 0.6; }
+.sv-edge { fill: none; stroke: var(--orange); stroke-width: 0.8; }
+.sv-slice { fill: rgba(249, 105, 50, 0.4); stroke: var(--orange); stroke-width: 1.2; }
+.sv-face { fill: rgba(249, 105, 50, 0.75); stroke: #000; stroke-width: 1.2; }
+.sv-hole { fill: var(--code-bg); stroke: #000; stroke-width: 1.2; }
+.sv-radius { stroke: #d93025; stroke-width: 2; }
+.sv-radius-in { stroke: #2e8b57; }

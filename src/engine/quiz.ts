@@ -274,6 +274,55 @@ export function buildQuiz(p: Problem): Question[] {
         check: (s) => { const n = numberOf(s); return n !== null && Math.abs(n - a.value) < 1e-3 * Math.max(1, Math.abs(a.value)) },
       },
     )
+  } else if (p.kind === 'volume' && p.area) {
+    const a = p.area
+    const reg = a.regions[0]
+    const washer = reg.bottom !== '0'
+    const note = a.note ? `\n\n_(${a.note})_` : ''
+    const pts = [0.2, 0.4, 0.6, 0.8].map((t) => reg.a + (reg.b - reg.a) * t)
+    const dV = washer ? `(${reg.top})^2-(${reg.bottom})^2` : `(${reg.top})^2`
+    const dVf = fn(dV)
+    qs.push(
+      {
+        id: 'elem', label: 'Disco o arandela', prompt: `Al girar la región alrededor del eje X, ¿qué forma tiene la rebanada (el elemento de integración)?${note}`, kind: 'choice',
+        choices: ['Disco (sin hueco: la región toca el eje de giro)', 'Arandela (con hueco: hay una curva de adentro y otra de afuera)'], correct: washer ? 1 : 0, expected: washer ? 'Arandela' : 'Disco',
+        hints: ['Mira la gráfica: ¿la región está pegada al eje X en todo el intervalo?', 'Si entre la región y el eje queda espacio vacío, al girar queda un hueco.', washer ? 'Hay dos curvas distintas del eje: arandela.' : 'Una sola curva sobre el eje X: disco.'],
+        explain: 'Disco: dV = π R² dx. Arandela: dV = π (R² − r²) dx.', check: (_a, c) => c === (washer ? 1 : 0),
+      },
+      {
+        id: 'cuts', label: 'Límites de integración', prompt: `Escribe los **límites** $a$ y $b$ (valores de $x$), de menor a mayor **separados por punto y coma**: p. ej. \`0; pi/2\`.${note}`, kind: 'nums', expected: `${fmtNum(reg.a, 4)}; ${fmtNum(reg.b, 4)}`,
+        hints: [washer ? 'Iguala las dos funciones y despeja x.' : 'Mira dónde la curva corta al eje X (y = 0) y si el enunciado trae otra frontera (x = número).', 'Si sale una raíz cuadrada, recuerda las dos soluciones ±.', 'Para ángulos usa `pi`.'],
+        explain: 'Los límites marcan dónde empieza y dónde termina la región.', chips: ['pi', ';', '/', 'sqrt('],
+        check: (t) => { const v = t.split(';').map(numberOf); return v.length === 2 && v.every((n, i) => n !== null && Math.abs(n - (i ? reg.b : reg.a)) < 1e-3) },
+      },
+      {
+        id: 'R', label: washer ? 'Radio exterior R(x)' : 'Radio del disco R(x)', prompt: washer ? `Escribe el **radio exterior** $R(x)$: la curva **más lejos** del eje X.${note}` : `Escribe el **radio** $R(x)$ del disco: la distancia del eje X a la curva.${note}`, kind: 'expr', v: 'x', expected: J(reg.top),
+        hints: ['El radio es la altura de la curva sobre el eje X.', washer ? 'Prueba un punto en medio de los límites: la que da el valor mayor es el radio exterior.' : 'Es la función del enunciado.', 'Copia la función con `sqrt( )`, `^`, `sin( )`…'],
+        explain: 'R(x) es lo que se eleva al cuadrado en el integrando.', chips: ['^', 'sqrt(', 'sin(', 'cos(', 'pi', '('],
+        check: (t) => sameExpr(t, reg.top, 'x', pts),
+      },
+    )
+    if (washer)
+      qs.push({
+        id: 'r', label: 'Radio interior r(x)', prompt: `Escribe el **radio interior** $r(x)$: la curva **más cerca** del eje X.${note}`, kind: 'expr', v: 'x', expected: J(reg.bottom),
+        hints: ['Es la otra curva del enunciado.', 'La que da el valor menor en un punto de prueba.', 'Si es un número, escríbelo (p. ej. `3`).'],
+        explain: 'r(x) es el borde del hueco.', chips: ['^', 'sqrt(', 'sin(', 'cos(', '('],
+        check: (t) => sameExpr(t, reg.bottom, 'x', pts),
+      })
+    qs.push(
+      {
+        id: 'dV', label: washer ? 'Integrando R² − r²' : 'Integrando R²', prompt: washer ? `Escribe el **integrando sin el π**: $R(x)^{2}-r(x)^{2}$. Eleva cada radio al cuadrado COMPLETO y luego resta.${note}` : `Escribe el **integrando sin el π**: $R(x)^{2}$.${note}`, kind: 'expr', v: 'x', expected: J(dV),
+        hints: [washer ? 'Es (R)² − (r)²: pon paréntesis alrededor de cada radio.' : 'Es la función al cuadrado: la raíz desaparece.', 'Puedes dejarlo sin expandir, se acepta cualquier forma equivalente.', washer ? '(a + b)² = a² + 2ab + b² (no a² + b²).' : '(√u)² = u.'],
+        explain: washer ? 'dV = π (R² − r²) dx, NO π (R − r)² dx.' : 'dV = π R² dx.', chips: ['(', ')', '^', 'sqrt(', 'sin(', 'cos('],
+        check: (t) => sameExpr(t, dV, 'x', pts) && !!toFn(t, ['x']) && Number.isFinite(dVf(pts[1])),
+      },
+      {
+        id: 'vol', label: 'Volumen', prompt: `Calcula el **volumen** $V=\\pi\\int_{a}^{b}\\ldots\\,dx$. Puedes escribir un número (\`${fmtNum(a.value, 3)}\`) o una expresión (\`304*pi/15\`). Verifica con tu Casio.${note}`, kind: 'num', expected: fmtNum(a.value, 6),
+        hints: ['Evalúa F(b) − F(a) con paréntesis y multiplica por π al final.', 'Comprueba con la Casio: π × ∫( … ) entre los límites.', `El volumen es aproximadamente ${fmtNum(a.value, 2)}.`],
+        explain: 'Comprueba con la Casio: π × ∫ (R² − r²) dx.', chips: ['pi', '/', '^', 'sqrt('],
+        check: (t) => { const n = numberOf(t); return n !== null && Math.abs(n - a.value) < 1e-3 * Math.max(1, Math.abs(a.value)) },
+      },
+    )
   }
   return qs
 }

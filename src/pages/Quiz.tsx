@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { LATEX_HINT, useAgent } from '../agent/AgentContext'
 import { Md, Tex } from '../components/Tex'
-import { FAMILIES, FAMILY_TITLE, LEVELS, TALLER_LABEL, generate } from '../engine'
+import { ALL_FAMILIES, FAMILY_TITLE, LEVELS, TALLER_LABEL, generate } from '../engine'
 import { buildQuiz, ghostOf, texPreview } from '../engine/quiz'
 import type { Question } from '../engine/quiz'
 import { LEVEL_LABEL } from '../engine/types'
@@ -30,7 +30,7 @@ export function Quiz() {
         <label>
           Ejercicio
           <select value={f} onChange={(e) => { nav(`/quiz/${e.target.value}/${lv}`); setSeed(1) }}>
-            {FAMILIES.map((x) => (
+            {ALL_FAMILIES.map((x) => (
               <option key={x} value={x}>
                 {TALLER_LABEL[x]} · {FAMILY_TITLE[x]}
               </option>

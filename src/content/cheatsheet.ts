@@ -117,6 +117,22 @@ export const CHEATSHEET: Section[] = [
       { id: 'a-ftc', name: 'Teorema Fundamental', tex: '\\int_{a}^{b}f(x)\\,dx=F(b)-F(a)', why: 'Evalúa la antiderivada en el límite superior y resta el inferior. Usa paréntesis con los negativos.', example: ['\\left[-2\\cos x\\right]_{0}^{\\pi}=2-(-2)=4'], mnemonic: '"Arriba menos abajo", otra vez: F de b MENOS F de a.' },
     ],
   },
+  {
+    id: 'vol',
+    title: 'Volúmenes de sólidos de revolución',
+    icon: '🌀',
+    intro: 'Al girar una región plana alrededor del eje X se forma un sólido. Lo cortas en rebanadas de grosor $dx$: cada una es un **disco** o una **arandela**. Suma (integra) sus volúmenes.',
+    entries: [
+      { id: 'v-disk', name: 'Método de los discos (eje X)', tex: 'V=\\pi\\int_{a}^{b}\\left[f(x)\\right]^{2}dx', why: 'Cada rebanada es un cilindro muy delgado: área del círculo $\\pi R^{2}$ por grosor $dx$, con el radio $R=f(x)$. Úsalo cuando la región **toca el eje de giro**.', example: ['\\int_{-r}^{r}\\pi\\left(r^{2}-x^{2}\\right)dx=\\frac{4}{3}\\pi r^{3}'], mnemonic: 'DISCO = "π por el radio al CUADRADO": el π y el cuadrado siempre van juntos.', chk: { kind: 'int', f: 'pi*(9-x^2)', F: 'pi*(9*x-x^3/3)' } },
+      { id: 'v-washer', name: 'Método de las arandelas (eje X)', tex: 'V=\\pi\\int_{a}^{b}\\left[R(x)^{2}-r(x)^{2}\\right]dx', why: 'Si entre la región y el eje queda un hueco, cada rebanada es un disco con agujero: área grande $\\pi R^{2}$ menos área del hueco $\\pi r^{2}$. $R$ es la curva **más lejos** del eje y $r$ la más cerca.', example: ['\\pi\\int_{-3}^{-1}\\left[(-4x)^{2}-(x^{2}+3)^{2}\\right]dx=\\frac{304\\pi}{15}'], mnemonic: 'ARANDELA = "Radio grande al cuadrado MENOS radio chico al cuadrado".' },
+      { id: 'v-wrong', name: 'El error más común: (R − r)²', tex: '\\pi\\left(R^{2}-r^{2}\\right)\\neq\\pi\\left(R-r\\right)^{2}', why: 'Primero se eleva cada radio al cuadrado y **después** se resta. Restar primero y elevar da un volumen distinto (y casi siempre menor).', example: ['R=3,\\ r=1:\\ \\ 9-1=8\\ \\neq\\ (3-1)^{2}=4'], mnemonic: 'Cuadrado por separado, resta al final: "cada uno en su casa".' },
+      { id: 'v-binom', name: 'Binomio al cuadrado', tex: '(a+b)^{2}=a^{2}+2ab+b^{2}', why: 'Al elevar $(x^{2}+3)^{2}$ el término del medio **no desaparece**: $x^{4}+6x^{2}+9$. Olvidarlo es el error número uno en arandelas.', example: ['(x^{2}+3)^{2}=x^{4}+6x^{2}+9'], mnemonic: 'El del medio es el doble producto: "el doble del primero por el segundo".', chk: { kind: 'id', l: '(x^2+3)^2', r: 'x^4+6*x^2+9' } },
+      { id: 'v-sq-root', name: 'El cuadrado deshace la raíz', tex: '\\left(\\sqrt{u}\\right)^{2}=u\\quad(u\\ge 0)', why: 'En $\\pi\\int(\\sqrt{r^{2}-x^{2}})^{2}dx$ la raíz desaparece y queda un polinomio fácil de integrar.', example: ['\\left(\\sqrt{9-x^{2}}\\right)^{2}=9-x^{2}'], mnemonic: 'Raíz y cuadrado son inversos: se anulan como el abrigo y el calor.', chk: { kind: 'id', l: 'sqrt(9-x^2)^2', r: '9-x^2' } },
+      { id: 'v-sphere', name: 'Esfera, hemisferio y elipsoide', tex: 'V_{esfera}=\\frac{4}{3}\\pi r^{3}\\qquad V_{elipsoide}=\\frac{4}{3}\\pi a\\,b^{2}', why: 'Salen de girar el semicírculo $y=\\sqrt{r^{2}-x^{2}}$ o la semielipse. Sirven para **comprobar** tu resultado. El hemisferio es la mitad: $\\frac{2}{3}\\pi r^{3}$.', example: ['r=3:\\ \\frac{4}{3}\\pi\\cdot 27=36\\pi'], mnemonic: '"Cuatro tercios pi erre cubo": se canta como una canción.' },
+      { id: 'v-trig', name: 'Trigonométricas en volúmenes', tex: '\\cos^{2}x-\\sin^{2}x=\\cos 2x\\qquad\\sin^{2}x=\\frac{1-\\cos 2x}{2}', why: 'Con seno y coseno el integrando lleva cuadrados: se bajan con el ángulo doble. **Calculadora en radianes.**', example: ['\\pi\\int_{0}^{\\pi/4}\\cos 2x\\,dx=\\frac{\\pi}{2}'], mnemonic: 'Coseno-cuadrado MENOS seno-cuadrado = coseno del doble.', chk: { kind: 'id', l: 'cos(x)^2-sin(x)^2', r: 'cos(2*x)' } },
+      { id: 'v-steps', name: 'Receta para el examen', tex: '\\text{dibuja}\\to\\text{rectángulo}\\to R,\\,r\\to\\pi\\int\\to\\text{resuelve}', why: '1) Dibuja la región y los **cortes** (iguala las funciones). 2) Dibuja el rectángulo vertical de ancho $dx$ y mira si al girar queda hueco. 3) Define $R$ y $r$. 4) Plantea $\\pi\\int(R^{2}-r^{2})dx$. 5) Eleva, resta, integra y evalúa $F(b)-F(a)$. 6) Verifica con la Casio.', example: ['V=\\pi\\int_{a}^{b}\\left[R^{2}-r^{2}\\right]dx'], mnemonic: '"Dibuja, corta, mide, cuadra y suma".' },
+    ],
+  },
 ]
 
 export const ALL_ENTRIES = CHEATSHEET.flatMap((s) => s.entries.map((e) => ({ ...e, section: s.title })))

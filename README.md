@@ -6,7 +6,7 @@ Todas las fórmulas se muestran en LaTeX (KaTeX).
 
 ## Qué incluye
 
-- **Taller resuelto** (9 ejercicios) con visor de pasos tipo depurador (líneas L1…, breakpoints, variables).
+- **Taller resuelto** (9 ejercicios + taller de volúmenes: I discos/esfera y II arandelas, con variantes, gráfica del elemento de integración, quiz y modo examen) con visor de pasos tipo depurador (líneas L1…, breakpoints, variables).
 - **Gráficas interactivas** (área, rectángulo `dx`, suma de rectángulos, integral definida).
 - **Práctica**: 4 variantes por ejercicio (2 gemelas + 2 retos con trigonometría y π).
 - **🐍 Versión en Python por ejercicio**: script SymPy bloque a bloque, ejecutable en el navegador (Pyodide, opcional), copiable y descargable. Todos los scripts se verifican con Python real (`scripts/verify-python.py`).

@@ -17,8 +17,9 @@ interface Answer {
 const PLAN: [number, Level[]][] = [
   [1, ['G1', 'G2']], [2, ['G1', 'G2', 'H1']], [3, ['G1', 'G2']], [4, ['G1', 'G2', 'H1']], [5, ['G1', 'G2']], [6, ['G1', 'G2']],
   [7, ['G1', 'G2']], [8, ['G1', 'G2']], [9, ['G1', 'G2']],
+  [10, ['G1', 'G2']], [11, ['G1', 'G2']],
 ]
-const label = (i: number) => (i < 6 ? `${i + 1}` : `7${'abc'[i - 6]}`)
+const label = (i: number) => (i < 6 ? `${i + 1}` : i < 9 ? `7${'abc'[i - 6]}` : `V-${'I'.repeat(i - 8)}`)
 
 function methodIdx(p: Problem) {
   return p.py?.kind === 'subst' ? 0 : p.py?.kind === 'parts' ? 1 : p.py?.kind === 'trig' ? 2 : p.py?.kind === 'pf' ? 3 : -1
@@ -36,6 +37,15 @@ function grade(p: Problem, a: Answer): Score {
     parts.push({ name: 'Método identificado', ok: a.method === methodIdx(p), pts: 1 })
     const f = fn(p.fExpr!)
     parts.push({ name: 'Resultado (la derivada de tu respuesta es el integrando)', ok: !!a.text && derivativeIs(a.text, f, p.testPts ?? [0.4, 0.8, 1.3]), pts: 3 })
+  } else if (p.kind === 'volume') {
+    const ar = p.area!
+    const reg = ar.regions[0]
+    const span = ar.view[1] - ar.view[0]
+    const hit = [reg.a, reg.b].every((c) => a.marks.some((m) => Math.abs(m.x - c) < 0.05 * span))
+    parts.push({ name: 'Gráfica: marcaste los dos límites de integración', ok: hit, pts: 1 })
+    parts.push({ name: 'Elemento de integración correcto (disco / arandela)', ok: a.top === (reg.bottom === '0' ? 0 : 1), pts: 1 })
+    const n = numberOf(a.text)
+    parts.push({ name: 'Volumen correcto', ok: n !== null && Math.abs(n - ar.value) < 1e-3 * Math.max(1, ar.value), pts: 3 })
   } else {
     const ar = p.area!
     const cuts = [...new Set(ar.regions.flatMap((r) => [r.a, r.b]))]
@@ -58,7 +68,7 @@ export function Exam() {
     return (
       <div className="page">
         <h1>Modo examen</h1>
-        <p className="lead">6 integrales y 3 áreas como en el taller. Sin ver la solución hasta que entregues. En las áreas debes <b>marcar los puntos de corte en la gráfica</b> y elegir qué curva queda arriba.</p>
+        <p className="lead">6 integrales, 3 áreas y 2 volúmenes de sólidos de revolución como en el taller. Sin ver la solución hasta que entregues. En las áreas debes <b>marcar los puntos de corte en la gráfica</b> y elegir qué curva queda arriba.</p>
         <div className="panel">
           <label className="field">
             Tiempo (minutos)
@@ -157,6 +167,7 @@ function ExamRun({ seed, minutes, onExit }: { seed: number; minutes: number; onE
         <div>
           <Tex block>{p.statement}</Tex>
           {p.kind === 'area' && <p className="muted">Encuentre el área de la región comprendida entre las gráficas de las funciones dadas.</p>}
+          {p.kind === 'volume' && <Md>{p.task ?? ''}</Md>}
         </div>
       </div>
       {p.kind === 'integral' ? (
@@ -173,6 +184,8 @@ function ExamRun({ seed, minutes, onExit }: { seed: number; minutes: number; onE
             <input className="ac-input" value={a.text} onChange={(e) => upd(cur, { text: e.target.value })} placeholder="p. ej. (x^2+1)^6/12" spellCheck={false} />
           </label>
         </div>
+      ) : p.kind === 'volume' ? (
+        <VolumeExam p={p} a={a} upd={(patch) => upd(cur, patch)} />
       ) : (
         <AreaExam p={p} a={a} upd={(patch) => upd(cur, patch)} />
       )}
@@ -220,6 +233,47 @@ function AreaExam({ p, a, upd }: { p: Problem; a: Answer; upd: (x: Partial<Answe
         <label className="field">
           <span>③ Área (número o expresión, p. ej. <code>pi^2/4</code>)</span>
           <input className="ac-input" value={a.text} onChange={(e) => upd({ text: e.target.value })} placeholder="p. ej. 4  ó  2*sqrt(2)" spellCheck={false} />
+        </label>
+      </div>
+    </div>
+  )
+}
+
+function VolumeExam({ p, a, upd }: { p: Problem; a: Answer; upd: (x: Partial<Answer>) => void }) {
+  const ar = p.area!
+  return (
+    <div>
+      <div className="panel">
+        <b>① Grafica: haz clic en el gráfico para marcar los dos límites de integración</b> (sobre el eje x).
+        <Graph
+          curves={ar.curves.map((c) => ({ expr: c.expr, color: c.color }))}
+          view={ar.view}
+          vline={ar.vline}
+          onPick={(x, y) => upd({ marks: [...a.marks, { x, y }] })}
+          marks={a.marks}
+          height={360}
+        />
+        <div className="row tight">
+          <span className="muted">Marcas: {a.marks.length ? a.marks.map((m) => fmtNum(m.x, 2)).join(' · ') : 'ninguna'}</span>
+          <button className="btn-tiny" onClick={() => upd({ marks: a.marks.slice(0, -1) })}>Deshacer</button>
+          <button className="btn-tiny" onClick={() => upd({ marks: [] })}>Borrar todas</button>
+        </div>
+      </div>
+      <div className="panel">
+        <b>② ¿Qué elemento de integración se forma al girar sobre el eje X?</b>
+        <div className="choices">
+          {['Disco: $dV=\\pi R^{2}\\,dx$', 'Arandela: $dV=\\pi\\left(R^{2}-r^{2}\\right)dx$'].map((t, k) => (
+            <label key={k} className={`choice ${a.top === k ? 'on' : ''}`}>
+              <input type="radio" name="elem" checked={a.top === k} onChange={() => upd({ top: k })} />
+              <Md>{t}</Md>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="panel">
+        <label className="field">
+          <span>③ Volumen (número o expresión, p. ej. <code>304*pi/15</code>)</span>
+          <input className="ac-input" value={a.text} onChange={(e) => upd({ text: e.target.value })} placeholder="p. ej. 36*pi" spellCheck={false} />
         </label>
       </div>
     </div>

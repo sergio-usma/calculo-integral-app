@@ -50,6 +50,8 @@ export interface AreaInfo {
   view: [number, number, number, number]
   value: number
   vline?: number
+  /** Nota que se muestra bajo la gráfica (p. ej. "ejemplo con r = 3"). */
+  note?: string
 }
 
 /** Metadatos simbólicos para generar el código Python (SymPy). Las cadenas se leen con sympify. */
@@ -59,14 +61,18 @@ export type PyMeta =
   | { kind: 'trig'; x: string; integrand: string; back: string }
   | { kind: 'pf'; roots: number[]; coefs: number[]; q: number; dens?: string[] }
   | { kind: 'area'; regions: [string, string][]; domain?: [string, string] }
+  /** Sólido de revolución sobre el eje X: radio exterior, radio interior ('0' = disco), límites y símbolos extra. */
+  | { kind: 'volume'; outer: string; inner: string; a: string; b: string; syms?: string[] }
 
 export interface Problem {
   id: string
   family: number
   level: Level
-  kind: 'integral' | 'area'
+  kind: 'integral' | 'area' | 'volume'
   title: string
   statement: string
+  /** Instrucción del ejercicio (markdown con $LaTeX$); si falta, se usa la genérica del tipo. */
+  task?: string
   method: string
   methodWhy: string
   steps: Step[]
@@ -96,4 +102,6 @@ export const FAMILY_TITLE: Record<number, string> = {
   7: 'Área entre rectas y parábolas',
   8: 'Área entre curvas (polinomios y exponenciales)',
   9: 'Área entre curvas trigonométricas',
+  10: 'Volumen por discos (sólido de revolución)',
+  11: 'Volumen por arandelas (sólido con hueco)',
 }

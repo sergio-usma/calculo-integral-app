@@ -347,10 +347,79 @@ print("✔ Todo coincide")`,
   ]
 }
 
+function volumeScript(p: Problem): PyBlock[] {
+  const a = p.area!
+  const m = p.py as Extract<NonNullable<Problem['py']>, { kind: 'volume' }>
+  const syms = m.syms ?? []
+  const washer = m.inner !== '0'
+  const symDecl = syms.map((s) => `${s} = symbols('${s}', positive=True)   # ${s} es un número fijo positivo (no la variable)`).join('\n')
+  const vars = ['"x": x', ...syms.map((s) => `"${s}": ${s}`)].join(', ')
+  const subs = syms.length ? `.subs(${syms.map((s) => `${s}, 3`).join(', ')})` : ''
+  return [
+    {
+      title: 'Preparación: el radio exterior' + (washer ? ' y el radio interior' : ''),
+      math: p.statement,
+      note: washer
+        ? '`R` es la curva más lejos del eje X y `r_` la más cercana. Al girar el rectángulo vertical de ancho dx alrededor del eje X se forma una arandela.'
+        : '`R` es la altura de la curva: el radio de cada disco. Al girar el rectángulo vertical de ancho dx alrededor del eje X se forma un disco.',
+      code: `${IMPORTS}
+
+x = symbols('x', real=True)
+${symDecl ? symDecl + '\n' : ''}VARS = {${vars}}
+
+def leer(texto):
+    return sympify(texto, locals=VARS)
+
+R  = leer(${q(m.outer)})      # radio exterior R(x)
+r_ = leer(${q(m.inner)})      # radio interior r(x)  (0 = disco, sin hueco)
+a_ = leer(${q(m.a)})          # límite inferior
+b_ = leer(${q(m.b)})          # límite superior
+print("R(x) =", R, "| r(x) =", r_, "| de", a_, "a", b_)`,
+    },
+    {
+      title: 'Paso 1 — Límites de integración',
+      math: 'a\\le x\\le b',
+      note: 'Los límites vienen del enunciado o de los puntos de corte. Aquí comprobamos los radios en los extremos: en un corte entre curvas R(x) = r(x).',
+      code: `for lim in (a_, b_):
+    print("x =", lim, "->  R =", simplify(R.subs(x, lim)), "  r =", simplify(r_.subs(x, lim)))`,
+    },
+    {
+      title: 'Paso 2 — Elemento de integración: dV = π (R² − r²) dx',
+      math: 'dV=\\pi\\left[R(x)^{2}-r(x)^{2}\\right]dx',
+      note: 'Cada rebanada es un cilindro (arandela) de área π(R² − r²) y grosor dx. `simplify` expande y reduce el integrando.',
+      code: `dV = simplify(pi * (R**2 - r_**2))     # lo que hay dentro de la integral
+print("dV/dx =", dV)`,
+    },
+    {
+      title: 'Paso 3 — Integrar de a a b',
+      math: 'V=\\pi\\int_{a}^{b}\\left(R^{2}-r^{2}\\right)dx',
+      note: 'SymPy integra y evalúa F(b) − F(a). Compara con tu resultado a mano.',
+      code: `V = simplify(integrate(dV, (x, a_, b_)))
+print("V =", V, "≈", N(V))`,
+    },
+    {
+      title: 'Paso 4 — Verificar sumando discos escritos a mano',
+      math: 'V\\approx\\sum\\pi\\left(R_i^{2}-r_i^{2}\\right)\\Delta x',
+      note: 'Así nació la integral: sumar muchos discos delgados de grosor dx. Con 100 000 discos la suma es casi exacta.',
+      code: `def suma_de_discos(expr, a, b, n=100_000):
+    dx = (b - a) / n
+    return sum(expr(a + (i + 0.5) * dx) for i in range(n)) * dx   # punto medio de cada disco
+
+f_dV = lambdify(x, dV${subs}, "math")
+aprox = suma_de_discos(f_dV, float(N(a_${subs})), float(N(b_${subs})))
+exacto = float(N(V${subs}))
+print(f"Suma de discos ≈ {aprox:.6f}")
+assert abs(aprox - exacto) < 1e-5
+assert abs(exacto - ${a.value.toPrecision(12)}) < 1e-8
+print("✔ Todo coincide")`,
+    },
+  ]
+}
+
 export function pythonFor(p: Problem): PyScript {
   const k = p.py?.kind
   const blocks =
-    p.kind === 'area' ? areaScript(p) : k === 'subst' ? substScript(p) : k === 'parts' ? partsScript(p) : k === 'trig' ? trigScript(p) : pfScript(p)
+    p.kind === 'area' ? areaScript(p) : p.kind === 'volume' ? volumeScript(p) : k === 'subst' ? substScript(p) : k === 'parts' ? partsScript(p) : k === 'trig' ? trigScript(p) : pfScript(p)
   const head = `# ${p.method} — ${p.title.replace(/\$/g, '')}\n# Ejecuta con:  pip install sympy  &&  python ejercicio.py\n`
   const starts: number[] = []
   let line = head.split('\n').length

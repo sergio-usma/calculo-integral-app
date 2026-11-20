@@ -68,3 +68,39 @@ export function casioForArea(p: Omit<Problem, 'casio'>): CasioKeys[] {
   })
   return items
 }
+
+export function casioForVolume(p: Omit<Problem, 'casio'>): CasioKeys[] {
+  const a = p.area!
+  const reg = a.regions[0]
+  const washer = reg.bottom !== '0'
+  const trig = !!p.usesTrig
+  const R = toCasio(reg.top)
+  const r = toCasio(reg.bottom)
+  const integrand = washer ? `(${R})²-(${r})²` : `(${R})²`
+  const lo = reg.a
+  const hi = reg.b
+  const items: CasioKeys[] = [PREP(trig)]
+  const cut = a.points.find((q) => Math.abs(q.x) > 1e-9)
+  if (washer && cut) {
+    const diff = `${R}-(${r})`
+    items.push({
+      title: 'Encontrar un punto de corte con SOLVE',
+      keys: [diff, 'SHIFT', 'CALC (SOLVE)', fmtNum(cut.x + 0.2, 3), '=', '='],
+      expect: `X ≈ ${fmtNum(cut.x)}`,
+      note: 'Escribe R(X) − r(X) (la calculadora lo toma como "= 0") y un valor inicial cercano al corte que buscas. SOLVE da UNA solución a la vez: cambia el valor inicial para encontrar la otra.',
+    })
+  }
+  items.push({
+    title: 'Comprobar el volumen: π por la integral',
+    keys: ['SHIFT', '×10ˣ (π)', '×', '∫', integrand, '▶', fmtNum(lo, 4), '▶', fmtNum(hi, 4), '='],
+    expect: `≈ ${fmtNum(a.value)}`,
+    note: `Es V = π∫${washer ? '(R² − r²)' : 'R²'}dx. Escribe π, multiplica y abre la integral ∫ con el integrando${washer ? ' (cada radio al cuadrado y restados)' : ''}. ${a.note ? a.note + ' ' : ''}Si la pantalla pide los límites en otra casilla, muévete con las flechas.`,
+  })
+  items.push({
+    title: 'Comparar con tu respuesta exacta',
+    keys: ['Tu respuesta exacta', 'S⇔D'],
+    expect: `≈ ${fmtNum(a.value)}`,
+    note: 'Escribe tu resultado en forma exacta (por ejemplo una fracción por π) y pulsa S⇔D para verlo en decimal. Debe coincidir con el valor anterior.',
+  })
+  return items
+}

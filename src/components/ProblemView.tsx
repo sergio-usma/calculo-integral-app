@@ -8,7 +8,7 @@ import { KeyChips } from './KeyChips'
 import { PythonView } from './PythonView'
 import { StepDebugger } from './StepDebugger'
 import { Md, Tex } from './Tex'
-import { AreaViz, IntegralViz } from './Viz'
+import { AreaViz, IntegralViz, VolumeViz } from './Viz'
 
 type Tab = 'result' | 'steps' | 'graph' | 'casio' | 'py'
 
@@ -42,6 +42,7 @@ export function ProblemView({ p, label }: { p: Problem; label?: string }) {
           </div>
           <Tex block>{p.kind === 'integral' ? p.statement + '\\,' : p.statement}</Tex>
           {p.kind === 'area' && <p className="muted">Encuentre el área de la región comprendida entre las gráficas de las funciones dadas.</p>}
+          {p.kind === 'volume' && <Md>{p.task ?? 'Halle el volumen del sólido que se forma al hacer girar sobre el eje X la región plana limitada por las gráficas dadas.'}</Md>}
         </div>
       </div>
       <div className="cell card-method">
@@ -56,7 +57,7 @@ export function ProblemView({ p, label }: { p: Problem; label?: string }) {
         ))}
       </nav>
       {tab === 'steps' && <StepDebugger steps={p.steps} startAt={Number(sp.get('line') ?? 0)} onSelectLine={(n, flat) => agent.selectRef({ kind: 'L', n, text: flat[n - 1].tex })} onAsk={(n) => void agent.send(`Explícame con detalle la línea @L${n}: qué hace, por qué es válida y qué álgebra hay escondida.` + LATEX_HINT)} />}
-      {tab === 'graph' && (p.kind === 'area' ? <AreaViz p={p} /> : <IntegralViz p={p} />)}
+      {tab === 'graph' && (p.kind === 'volume' ? <VolumeViz key={p.id} p={p} /> : p.kind === 'area' ? <AreaViz key={p.id} p={p} /> : <IntegralViz key={p.id} p={p} />)}
       {tab === 'casio' && (
         <div className="casio-list">
           <p className="muted">
